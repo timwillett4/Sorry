@@ -39,8 +39,8 @@ type Pawn = {
 }
 
 type Player = {
-    Color : Color
     Name : string    
+    Color : Color
     // Keep it simpler for now
     //Age : Int0to100.T
     //Name : Name.T
