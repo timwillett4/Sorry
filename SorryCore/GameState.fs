@@ -12,19 +12,26 @@ open Sorry.Core
 /// </summary>
 let newGame = SettingUp({Players=[]})
 
-// Commands
-let addPlayer name color game =
-    match game with
-    | SettingUp(game) -> SettingUp({ Players = game.Players @ [{Name=name; Color=color}]})
-    | _ -> game // @TODO - return result error here, eventually need to catch invalid adds in setup state as well
-     
-
 // Querries
+/// getChosenColors returns a list of the colors that have already been chosen
+let getChosenColors game = game.Players |> List.map (fun player -> player.Color)
+
 /// getAvailableColors returns the available colors left to choose from
 let getAvailableColors game =
     match game with
     | SettingUp(game) ->
-        let chosenColors = game.Players |> List.map (fun player -> player.Color)
         let allColors = FSharpType.getAllEnumsValues<Color>()
+        let chosenColors = game |> getChosenColors
         List.distinct allColors chosenColors
     | _ -> []
+    
+// Commands
+let tryAddPlayer name color game =
+    match game with
+    | SettingUp(setupState) ->
+        let chosenColors = setupState |> getChosenColors
+        // @TODO create validation rules builder
+        match chosenColors |> List.contains color with
+        | false -> Ok(SettingUp({ Players = setupState.Players @ [{Name=name; Color=color}]}))
+        | true -> Error(game, sprintf"%A has already been chosen" <| color)
+    | _ -> Error(game, "Can only add players when game is in setup state") 

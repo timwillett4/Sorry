@@ -99,4 +99,4 @@ type GameState =
    | SettingUp of SetupState 
    | Drawing of DrawState
    | ChoosingAction of ChooseActionState
-   | GameOverGameOverState
+   | GameOver of GameOverState
