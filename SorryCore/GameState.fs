@@ -1,6 +1,7 @@
 ﻿module Sorry.Core.GameState
 
 open FSharp.Core.Extensions
+open FSharp.Core.Extensions.Validation
 open Sorry.Core
 
 /// The Sorry Game State consists
@@ -13,6 +14,7 @@ open Sorry.Core
 let newGame = SettingUp({Players=[]})
 
 // Querries
+
 /// getChosenColors returns a list of the colors that have already been chosen
 let getChosenColors game = game.Players |> List.map (fun player -> player.Color)
 
@@ -29,9 +31,15 @@ let getAvailableColors game =
 let tryAddPlayer name color game =
     match game with
     | SettingUp(setupState) ->
-        let chosenColors = setupState |> getChosenColors
-        // @TODO create validation rules builder
-        match chosenColors |> List.contains color with
-        | false -> Ok(SettingUp({ Players = setupState.Players @ [{Name=name; Color=color}]}))
-        | true -> Error(game, sprintf"%A has already been chosen" <| color)
-    | _ -> Error(game, "Can only add players when game is in setup state") 
+        let addPlayerRules : ValidationRule<SetupState * Player> list =
+            [ fun (setupState, player) ->
+                let chosenColors = setupState |> getChosenColors
+                chosenColors |> List.contains player.Color, sprintf"%A has already been chosen" <| color]
+            
+        let addPlayerValidator = buildValidator addPlayerRules
+        
+        match (setupState, {Name=name;Color=color}) |> addPlayerValidator with
+        | true, _ -> Ok(SettingUp({ Players = setupState.Players @ [{Name=name; Color=color}]}))
+        | false, error -> Error(game, error)
+    | _ -> Error(game, "Can only add players when game is in setup state")
+    
