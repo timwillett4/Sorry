@@ -1,12 +1,16 @@
 ﻿// Learn more about F# at http://fsharp.org
 
 open System
+open Sorry.Core
+open Sorry.Core.GameState
 
 [<EntryPoint>]
 let main argv =
     let deleteChar() = Console.Write("\b \b")
     let readChar() = Console.ReadKey().KeyChar
     let readLine() = Console.ReadLine()
+    
+    let game = GameState.newGame
     
     let rec getNumberOfPlayers readChar =
         match readChar() with
@@ -17,21 +21,35 @@ let main argv =
             deleteChar()
             getNumberOfPlayers readChar
             
-    Console.Write "Select number of players (2-4): "
+    printf "Select number of players (2-4): "
     let nPlayers = getNumberOfPlayers readChar
     Console.Clear()
     
-    //let getPlayerInfo player = readLine
+    let rec chooseColor readChar =
+        match readChar() with
+        // @TODO - syntax for matching 'R' or 'r'
+        | 'R' -> Color.Red
+        | 'Y' -> Color.Yellow
+        | 'B' -> Color.Blue
+        | 'G' -> Color.Green
+        | _ ->
+            deleteChar()
+            chooseColor readChar
         
-    let playerNames =
-        seq { for i in 1..nPlayers -> i }
-        |> Seq.map (fun player ->
-            Console.Write(sprintf "Enter name for player %i:" <| player)
-            let playerName = readLine()
-            Console.Write(sprintf "Choose color %i:" <| player)
-            Console.Clear()
-            playerName
-        )
-        |> Seq.toList
+    let rec addPlayer game playerIndex =
+        printf "Enter name for player %i:" <| playerIndex
+        let playerName = readLine()
+        
+        printf "Choose color %i:" <| playerIndex
+        let color = chooseColor readChar
+        printfn ""
+    
+        match game |> tryAddPlayer playerName color with
+        | Ok(game) -> game
+        | Error(gameSate, error:string) ->
+            printfn "%A" <|error
+            addPlayer game playerIndex
+        
+    let game = seq { for i in 1..nPlayers -> i } |> Seq.fold addPlayer game 
        
     0 // return an integer exit code 
