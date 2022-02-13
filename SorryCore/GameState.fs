@@ -34,7 +34,7 @@ let tryAddPlayer name color game =
         let addPlayerRules : ValidationRule<SetupState * Player> list =
             [ fun (setupState, player) ->
                 let chosenColors = setupState |> getChosenColors
-                chosenColors |> List.contains player.Color, sprintf"%A has already been chosen" <| color]
+                not <| (chosenColors |> List.contains player.Color), sprintf"%A has already been chosen" <| color]
             
         let addPlayerValidator = buildValidator addPlayerRules
         
