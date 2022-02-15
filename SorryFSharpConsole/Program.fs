@@ -7,7 +7,11 @@ open Sorry.Core.GameState
 [<EntryPoint>]
 let main argv =
     let deleteChar() = Console.Write("\b \b")
-    let readChar() = Console.ReadKey().KeyChar
+    let readChar() =
+        let char = Console.ReadKey().KeyChar
+        Console.WriteLine()
+        char
+        
     let readLine() = Console.ReadLine()
     
     let game = GameState.newGame
@@ -23,11 +27,9 @@ let main argv =
             
     printf "Select number of players (2-4): "
     let nPlayers = getNumberOfPlayers readChar
-    Console.Clear()
     
     let rec chooseColor readChar =
-        match readChar() with
-        // @TODO - syntax for matching 'R' or 'r'
+        match readChar() |> Char.ToUpper with
         | 'R' -> Color.Red
         | 'Y' -> Color.Yellow
         | 'B' -> Color.Blue
@@ -51,5 +53,5 @@ let main argv =
             addPlayer game playerIndex
         
     let game = seq { for i in 1..nPlayers -> i } |> Seq.fold addPlayer game 
-       
+    let   
     0 // return an integer exit code 
