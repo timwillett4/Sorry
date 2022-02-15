@@ -61,4 +61,14 @@ let createGameTests =
             Expect.isError gameState "Expect error to be returned when game is not in setting up state"
         }
         // @TODO - test that error is reported if name doesn't match validation rules (use validation rule builder)
+    
+        test "Starting a game with only 1 player should return an error" {
+            let gameState = result {
+                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
+                let! game = game |> GameState.startGame
+                return game
+            }
+                
+            Expect.isError gameState "Expect error to be returned when a game is started with only 1 player"
+        }
     ]
