@@ -34,7 +34,7 @@ let tryAddPlayer name color game =
         let addPlayerRules : ValidationRule<SetupState * Player> list =
             [ fun (setupState, player) ->
                 let chosenColors = setupState |> getChosenColors
-                not <| (chosenColors |> List.contains player.Color), sprintf"%A has already been chosen" <| color]
+                not <| (chosenColors |> List.contains player.Color), "Can't choose a color that has already been chosen"]
             
         let addPlayerValidator = buildValidator addPlayerRules
         
@@ -43,3 +43,8 @@ let tryAddPlayer name color game =
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only add players when game is in setup state")
     
+let startGame game =
+    match game with
+    | SettingUp(setupState) -> Ok(game)
+    | _ -> Error(game, "Can only start a game that is still in setup state")
+                 
