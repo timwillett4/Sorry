@@ -53,5 +53,4 @@ let main argv =
             addPlayer game playerIndex
         
     let game = seq { for i in 1..nPlayers -> i } |> Seq.fold addPlayer game 
-    let   
     0 // return an integer exit code 
