@@ -126,8 +126,8 @@ type BoardPosition =
     | Start of Color   
     | Home of Color 
 
-/// Board state is a map storing where each pawn is on board for each color
-type BoardState = Map<Color, Map<PawnID, BoardPosition>>
+/// Board state is a map storing where each pawn is on board 
+type BoardState = Map<Color * PawnID, BoardPosition>
 
 /// The setup state indicates players are still being added and the game has not yet started
 type SetupState = {
