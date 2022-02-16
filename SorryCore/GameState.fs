@@ -45,6 +45,14 @@ let tryAddPlayer name color game =
     
 let startGame game =
     match game with
-    | SettingUp(setupState) -> Ok(game)
+    | SettingUp(setupState) ->
+        let startGameRules : ValidationRule<SetupState> list =
+            [ fun setupState -> setupState.Players.Length >=2, "Must have at least 2 players to start a game"]
+            
+        let startGameValidator = buildValidator startGameRules
+        
+        match setupState |> startGameValidator with
+        | true, _ -> Ok(Drawing({Deck=[];TokenPositions=[] |> Map.ofList;ActivePlayer=setupState.Players.[0]}))
+        | false, error -> Error(game, error)
     | _ -> Error(game, "Can only start a game that is still in setup state")
                  

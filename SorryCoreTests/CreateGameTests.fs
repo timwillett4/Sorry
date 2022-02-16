@@ -6,12 +6,9 @@ open FSharp.Core.Extensions.Result
 open Expecto
 
 [<Tests>]
-let createGameTests =
+let addPlayerTests =
 
-    let allColors = FSharpType.getAllEnumsValues<Color>()
-    let tokenIDs = FSharpType.getAllUnionCases<PawnID>()
-
-    testList "Create New Game Tests" [
+    testList "Add new player tests" [
 
         test "New game should initialize in setting up state with no players added" {
             let game = GameState.newGame
@@ -58,10 +55,24 @@ let createGameTests =
                 return game
             }
                 
-            Expect.isError gameState "Expect error to be returned when game is not in setting up state"
+            Expect.isError gameState "Expect error to be returned when try to add a player to a game that is not in setting up state"
         }
         // @TODO - test that error is reported if name doesn't match validation rules (use validation rule builder)
-    
+    ]
+
+[<Tests>]
+let startGameTests =  
+    testList "Start Game Tests" [
+        test "Starting a game when game is not in setup state should return an error" {
+            let gameState = result {
+                let game = GameOver({Winner={Name="Levi";Color=Color.Red}})
+                let! game = game |> GameState.startGame
+                return game
+            }
+                
+            Expect.isError gameState "Expect error to be returned starting a game that is not in setting up state"
+        }
+        
         test "Starting a game with only 1 player should return an error" {
             let gameState = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
@@ -71,4 +82,20 @@ let createGameTests =
                 
             Expect.isError gameState "Expect error to be returned when a game is started with only 1 player"
         }
+        
+        test "Starting a game with 2 player should transition game to draw state" {
+            let gameState = result {
+                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
+                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
+                let! game = game |> GameState.startGame
+                
+                return game
+            }
+                
+            match gameState with
+            | Ok(Drawing _) -> ()
+            | _ -> failtest "Expected game to transition to drawing state"
+        }
+        // @TODO - add test for transitioning to draw state
     ]
+    
