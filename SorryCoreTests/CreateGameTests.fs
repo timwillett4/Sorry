@@ -96,6 +96,20 @@ let startGameTests =
             | Ok(Drawing _) -> ()
             | _ -> failtest "Expected game to transition to drawing state"
         }
-        // @TODO - add test for transitioning to draw state
+        
+        // @TODO - add tests for verifying board setup
+        test "A new game should have 45 cards in the deck" {
+            let gameState = result {
+                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
+                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
+                let! game = game |> GameState.startGame
+                
+                return game
+            }
+                
+            match gameState with
+            | Ok(Drawing gameState) -> Expect.equal gameState.Deck.Length 45 "Expected game to contain 45 cards"
+            | _ -> failtest "Expected game to transition to draw state"
+        }
     ]
     

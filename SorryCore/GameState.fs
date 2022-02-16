@@ -52,7 +52,8 @@ let startGame game =
         let startGameValidator = buildValidator startGameRules
         
         match setupState |> startGameValidator with
-        | true, _ -> Ok(Drawing({Deck=[];TokenPositions=[] |> Map.ofList;ActivePlayer=setupState.Players.[0]}))
+        | true, _ -> Ok(Drawing({Deck=newDeck;TokenPositions=[] |> Map.ofList;ActivePlayer=setupState.Players.[0]}))
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only start a game that is still in setup state")
+                 
                  

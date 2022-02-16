@@ -10,8 +10,8 @@ type Color =
     | Blue = 2
     | Yellow = 3
 
-/// Card type is a discrimenent union representing the 12 different types of cards 
-// @TODO - add desckriptions (and how many of each type there should be?)
+/// Card type is a discriminant union representing the 12 different types of cards 
+// @TODO - add descriptions (and how many of each type there should be?)
 type Card =
     | One
     | Two
@@ -26,6 +26,65 @@ type Card =
     | Sorry
 
 type Deck = Card list
+
+let newDeck = [
+    // 5 ones, 4 of every other card
+    Card.One
+    Card.One
+    Card.One
+    Card.One
+    Card.One
+    
+    Card.Two
+    Card.Two
+    Card.Two
+    Card.Two
+   
+    Card.Three
+    Card.Three
+    Card.Three
+    Card.Three
+    
+    Card.Four
+    Card.Four
+    Card.Four
+    Card.Four
+    
+    Card.Five
+    Card.Five
+    Card.Five
+    Card.Five
+    
+    Card.Seven
+    Card.Seven
+    Card.Seven
+    Card.Seven
+   
+    Card.Eight
+    Card.Eight
+    Card.Eight
+    Card.Eight
+    
+    Card.Ten
+    Card.Ten
+    Card.Ten
+    Card.Ten
+    
+    Card.Eleven
+    Card.Eleven
+    Card.Eleven
+    Card.Eleven
+    
+    Card.Twelve
+    Card.Twelve
+    Card.Twelve
+    Card.Twelve
+    
+    Card.Sorry
+    Card.Sorry
+    Card.Sorry
+    Card.Sorry
+]
 
 type PawnID = 
     | One
