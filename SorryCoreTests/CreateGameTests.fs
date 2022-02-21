@@ -138,7 +138,8 @@ let startGameTests =
             | Ok(numberOfRed, numberOfYellow) -> Expect.equal (numberOfRed, numberOfYellow) (3, 3) "Expected 3 of each color"
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
-        test "All pieces should start on their home square" {
+        
+        test "All pieces should start on their start square" {
             let allPiecesOnHomeSquare = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
@@ -149,7 +150,7 @@ let startGameTests =
             }
             
             match allPiecesOnHomeSquare with
-            | Ok(onHomeSquare) -> Expect.isTrue onHomeSquare "Expected all pieces to start on their home square"
+            | Ok(onHomeSquare) -> Expect.isTrue onHomeSquare "Expected all pieces to start on their start square"
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
         // @TODO - player list should match setup state

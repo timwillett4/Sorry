@@ -60,7 +60,20 @@ let startGame game =
         let startGameValidator = buildValidator startGameRules
         
         match setupState |> startGameValidator with
-        | true, _ -> Ok(Drawing({Deck=newDeck;TokenPositions=[] |> Map.ofList;ActivePlayer=setupState.Players.[0]}))
+        | true, _ ->
+            let initializeTokenPositions (players:Player list) =
+                players
+                |> List.map (fun player ->
+                    [(player.Color, PawnID.One), BoardPosition.Start(player.Color)
+                     (player.Color, PawnID.Two), BoardPosition.Start(player.Color)
+                     (player.Color, PawnID.Three), BoardPosition.Start(player.Color)])
+                |> List.reduce (fun colors1 colors2 -> colors1 @ colors2)
+                |> Map.ofList
+                
+            let tokenPositions = initializeTokenPositions setupState.Players
+            
+            Ok(Drawing({Deck=newDeck;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[0]}))
+            
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only start a game that is still in setup state")
                  
