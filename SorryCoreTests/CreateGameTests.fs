@@ -83,7 +83,8 @@ let startGameTests =
             Expect.isError gameState "Expect error to be returned when a game is started with only 1 player"
         }
         
-        test "Starting a game with 2 player should transition game to draw state" {
+        
+        test "Starting a game with 2 or more players should transition game to draw state" {
             let gameState = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
@@ -91,25 +92,68 @@ let startGameTests =
                 
                 return game
             }
-                
+            
             match gameState with
             | Ok(Drawing _) -> ()
             | _ -> failtest "Expected game to transition to drawing state"
         }
         
-        // @TODO - add tests for verifying board setup
         test "A new game should have 45 cards in the deck" {
-            let gameState = result {
+            let numCardsInDeck = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
                 let! game = game |> GameState.startGame
                 
-                return game
+                let numCards =
+                    match game with
+                    | Drawing gameState -> Ok gameState.Deck.Length
+                    | _ -> Error (game, "Expected game to transition to draw state")
+                    
+                return! numCards
             }
-                
-            match gameState with
-            | Ok(Drawing gameState) -> Expect.equal gameState.Deck.Length 45 "Expected game to contain 45 cards"
-            | _ -> failtest "Expected game to transition to draw state"
+            
+            match numCardsInDeck with
+            | Ok(numCardsInDeck) -> Expect.equal numCardsInDeck 45 "Expected game to contain 45 cards"
+            | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
+        
+        // @TODO - deck should be shuffled
+        
+        test "There should be 3 tokens of each color" {
+            let num = result {
+                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
+                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
+                let! game = game |> GameState.startGame
+                let! tokens = game |> GameState.getTokenPositions
+                
+                let countColor color game =
+                    game
+                    |> Map.filter (fun (c, _) position -> c = color)
+                    |> Map.count 
+                
+                return (tokens |> countColor Color.Red), (tokens |> countColor Color.Yellow)
+            }
+            
+            match num with
+            | Ok(numberOfRed, numberOfYellow) -> Expect.equal (numberOfRed, numberOfYellow) (3, 3) "Expected 3 of each color"
+            | Error(e, _) -> failtest $"Unexpected error: {e}"
+        }
+        test "All pieces should start on their home square" {
+            let allPiecesOnHomeSquare = result {
+                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
+                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
+                let! game = game |> GameState.startGame
+                let! tokens = game |> GameState.getTokenPositions
+                    
+                return tokens |> Map.forall (fun (color, _) position -> position = BoardPosition.Start(color))
+            }
+            
+            match allPiecesOnHomeSquare with
+            | Ok(onHomeSquare) -> Expect.isTrue onHomeSquare "Expected all pieces to start on their home square"
+            | Error(e, _) -> failtest $"Unexpected error: {e}"
+        }
+        // @TODO - player list should match setup state
+        // @TODO - who should be active player?  Random??
     ]
+    
     

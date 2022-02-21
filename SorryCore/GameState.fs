@@ -26,6 +26,12 @@ let getAvailableColors game =
         let chosenColors = game |> getChosenColors
         List.distinct allColors chosenColors
     | _ -> []
+
+let getTokenPositions game = 
+    match game with
+    | Drawing(gameState) -> Ok(gameState.TokenPositions)
+    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | _ -> Error(game, "Not implemented")
     
 // Commands
 let tryAddPlayer name color game =
@@ -43,6 +49,8 @@ let tryAddPlayer name color game =
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only add players when game is in setup state")
     
+/// startGame should be called when you are done adding players and configuring settings
+/// and ready to begin the game.
 let startGame game =
     match game with
     | SettingUp(setupState) ->
