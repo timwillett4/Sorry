@@ -1,6 +1,7 @@
 ﻿[<AutoOpen>]
 module Sorry.Core.DomainTypes
 
+open System.Security.Cryptography
 open Sorry.Core
 
 /// The color enum represent the four possible colors players can choose from
@@ -166,6 +167,7 @@ type SetupState = {
 /// The DrawState is when a player is currently up to draw a card
 type DrawState = {
     Deck : Deck
+    RandomNumberGenerator : unit -> int
     Players : Player list
     TokenPositions : BoardState
     ActivePlayer : Player

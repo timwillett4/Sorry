@@ -73,6 +73,8 @@ let startGame random game =
         
         match setupState |> startGameValidator with
         | true, _ ->
+            let activePlayer = random() % setupState.Players.Length
+                
             let initializeTokenPositions (players:Player list) =
                 players
                 |> List.map (fun player ->
@@ -84,7 +86,7 @@ let startGame random game =
                 
             let tokenPositions = initializeTokenPositions setupState.Players
             
-            Ok(Drawing({Deck=newDeck;Players=setupState.Players;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[0]}))
+            Ok(Drawing({Deck=newDeck;RandomNumberGenerator=random;Players=setupState.Players;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[activePlayer]}))
             
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only start a game that is still in setup state")
