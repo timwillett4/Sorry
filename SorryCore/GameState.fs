@@ -16,7 +16,7 @@ let newGame = SettingUp({Players=[]})
 // Querries
 
 /// getChosenColors returns a list of the colors that have already been chosen
-let getChosenColors game = game.Players |> List.map (fun player -> player.Color)
+let private getChosenColors (game:SetupState) = game.Players |> List.map (fun player -> player.Color)
 
 /// getAvailableColors returns the available colors left to choose from
 let getAvailableColors game =
@@ -30,6 +30,12 @@ let getAvailableColors game =
 let getTokenPositions game = 
     match game with
     | Drawing(gameState) -> Ok(gameState.TokenPositions)
+    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | _ -> Error(game, "Not implemented")
+    
+let getPlayers game = 
+    match game with
+    | Drawing(gameState) -> Ok(gameState.Players)
     | SettingUp(_) -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
@@ -72,7 +78,7 @@ let startGame game =
                 
             let tokenPositions = initializeTokenPositions setupState.Players
             
-            Ok(Drawing({Deck=newDeck;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[0]}))
+            Ok(Drawing({Deck=newDeck;Players=setupState.Players;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[0]}))
             
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only start a game that is still in setup state")

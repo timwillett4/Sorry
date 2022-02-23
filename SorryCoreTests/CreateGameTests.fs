@@ -154,6 +154,21 @@ let startGameTests =
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
         // @TODO - player list should match setup state
+        
+        test "When a game is started, the players list should match those added in setup state" {
+            let players = result {
+                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
+                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
+                let! game = game |> GameState.startGame
+                
+                return! game |> GameState.getPlayers
+            }
+            
+            match players with
+            | Ok(players) -> Expect.equal players [{Name="Levi";Color=Color.Red};{Name="Tim";Color=Color.Yellow}] "Expected players list to match those added in setup state"
+            | Error(e, _) -> failtest $"Unexpected error: {e}"
+        }
+        
         // @TODO - who should be active player?  Random??
     ]
     

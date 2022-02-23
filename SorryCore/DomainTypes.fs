@@ -114,17 +114,46 @@ type Player = {
 ///     The next square it moves to is 1, etc.
 ///
 /// <example>
-///     R0 1 2 3 4 5 6 . . . . . . R13
-/// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+///     (0,0) (1,0) ... ... (15,0)
+///     (0,1) ... ...       (15,1)
+///     ...
+///     ...
+///     (0,15) (1,15)  ...  (15,15)
 /// _   ^                         _ R14
 /// _                           > _ B0
 /// ...
 /// </example>
+
+type OuterCoordinate =
+    | Zero = 0
+    | One = 1
+    | Two = 2
+    | Three = 3
+    | Four = 4
+    | Five = 5
+    | Six = 6
+    | Seven = 7
+    | Eight = 8
+    | Nine = 9
+    | Ten = 10
+    | Eleven = 11
+    | Twelve = 12
+    | Thirteen = 13
+    | Fourteen = 14
+    | Fifteen = 15
+    
+type SafetySquare =
+    | Zero = 0
+    | One = 1
+    | Two = 2
+    | Three = 3
+    | Four = 4
+    
 type BoardPosition = 
-    | Outer of Color * Int0to14.T
-    | Safety of Color * Int0to4.T
+    | Outer of OuterCoordinate * OuterCoordinate
+    | Safety of Color * SafetySquare
     | Start of Color   
-    | Home of Color 
+    | Home of Color
 
 /// Board state is a map storing where each pawn is on board 
 type BoardState = Map<Color * PawnID, BoardPosition>
@@ -137,6 +166,7 @@ type SetupState = {
 /// The DrawState is when a player is currently up to draw a card
 type DrawState = {
     Deck : Deck
+    Players : Player list
     TokenPositions : BoardState
     ActivePlayer : Player
 }
