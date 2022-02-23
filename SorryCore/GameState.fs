@@ -5,6 +5,7 @@ open FSharp.Core.Extensions.Validation
 open Sorry.Core
 
 /// The Sorry Game State consists
+/// @TODO - finish
 
 
 /// <summary>
@@ -13,12 +14,13 @@ open Sorry.Core
 /// </summary>
 let newGame = SettingUp({Players=[]})
 
-// Querries
+// Queries
 
 /// getChosenColors returns a list of the colors that have already been chosen
 let private getChosenColors (game:SetupState) = game.Players |> List.map (fun player -> player.Color)
 
 /// getAvailableColors returns the available colors left to choose from
+/// this query is only valid before a game has been started via calling 'startGame'
 let getAvailableColors game =
     match game with
     | SettingUp(game) ->
