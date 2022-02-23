@@ -143,6 +143,7 @@ let startGameTests =
             let availableActions = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
+                let! game = game |> GameState.startGame (fun () -> 0)
                 
                 return! game |> GameState.getAvailableActions
             }
