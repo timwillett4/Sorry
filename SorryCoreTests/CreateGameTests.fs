@@ -153,7 +153,6 @@ let startGameTests =
             | Ok(onHomeSquare) -> Expect.isTrue onHomeSquare "Expected all pieces to start on their start square"
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
-        // @TODO - player list should match setup state
         
         test "When a game is started, the players list should match those added in setup state" {
             let players = result {
