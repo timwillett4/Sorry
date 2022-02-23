@@ -28,6 +28,20 @@ type Card =
 
 type Deck = Card list
 
+type PawnID = 
+    | One
+    | Two
+    | Three
+
+
+type Pawn = {
+    Color : Color
+    ID : PawnID
+}
+
+type Action =
+    | DrawCard
+    
 let newDeck = [
     // 5 ones, 4 of every other card
     Card.One
@@ -86,17 +100,6 @@ let newDeck = [
     Card.Sorry
     Card.Sorry
 ]
-
-type PawnID = 
-    | One
-    | Two
-    | Three
-
-
-type Pawn = {
-    Color : Color
-    ID : PawnID
-}
 
 type Player = {
     Name : string    

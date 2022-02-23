@@ -45,6 +45,12 @@ let getActivePlayer game =
     | SettingUp(_) -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
+let getAvailableActions game = 
+    match game with
+    | Drawing(_) -> Ok([Action.DrawCard])
+    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | _ -> Error(game, "Not implemented")
+    
 // Commands
 let tryAddPlayer name color game =
     match game with

@@ -137,6 +137,20 @@ let startGameTests =
             | Ok(activePlayers) -> Expect.equal activePlayers [levi;tim;levi] "Expected active player to be chosen by random number"
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
+        
+        test "Only action for newly created game should be draw card" {
+            
+            let availableActions = result {
+                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
+                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
+                
+                return! game |> GameState.getAvailableActions
+            }
+            
+            match availableActions with
+            | Ok(actions) -> Expect.equal actions [Action.DrawCard] "Expected available action to be single action of draw card"
+            | Error(e, _) -> failtest $"Unexpected error: {e}"
+        }
     ]
     
     
