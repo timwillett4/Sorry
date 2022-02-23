@@ -66,7 +66,7 @@ let startGameTests =
         test "Starting a game when game is not in setup state should return an error" {
             let gameState = result {
                 let game = GameOver({Winner={Name="Levi";Color=Color.Red}})
-                let! game = game |> GameState.startGame
+                let! game = game |> GameState.startGame (fun () -> 1)
                 return game
             }
                 
@@ -76,7 +76,7 @@ let startGameTests =
         test "Starting a game with only 1 player should return an error" {
             let gameState = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.startGame
+                let! game = game |> GameState.startGame (fun () -> 1)
                 return game
             }
                 
@@ -88,7 +88,7 @@ let startGameTests =
             let gameState = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame
+                let! game = game |> GameState.startGame (fun () -> 1)
                 
                 return game
             }
@@ -102,7 +102,7 @@ let startGameTests =
             let numCardsInDeck = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame
+                let! game = game |> GameState.startGame (fun () -> 1)
                 
                 let numCards =
                     match game with
@@ -123,7 +123,7 @@ let startGameTests =
             let num = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame
+                let! game = game |> GameState.startGame (fun () -> 1)
                 let! tokens = game |> GameState.getTokenPositions
                 
                 let countColor color game =
@@ -143,7 +143,7 @@ let startGameTests =
             let allPiecesOnHomeSquare = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame
+                let! game = game |> GameState.startGame (fun () -> 1)
                 let! tokens = game |> GameState.getTokenPositions
                     
                 return tokens |> Map.forall (fun (color, _) position -> position = BoardPosition.Start(color))
@@ -158,7 +158,7 @@ let startGameTests =
             let players = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame
+                let! game = game |> GameState.startGame (fun () -> 1)
                 
                 return! game |> GameState.getPlayers
             }
@@ -168,7 +168,33 @@ let startGameTests =
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
         
-        // @TODO - who should be active player?  Random??
+        test "When a game is started, the Active player should be chosen according to the random number method" {
+            let random0() = 0
+            let random1() = 1
+            let random2() = 2
+            
+            
+            let activePlayers = result {
+                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
+                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
+                let! game1 = game |> GameState.startGame random0
+                let! game2 = game |> GameState.startGame random1
+                let! game3 = game |> GameState.startGame random2
+                
+                let! activePlayer1 = game1 |> GameState.getActivePlayer
+                let! activePlayer2 = game2 |> GameState.getActivePlayer
+                let! activePlayer3 = game3 |> GameState.getActivePlayer
+                
+                return [activePlayer1;activePlayer2;activePlayer3]
+            }
+            
+            let levi = {Name="Levi";Color=Color.Red}
+            let tim = {Name="Tim";Color=Color.Yellow}
+            
+            match activePlayers with
+            | Ok(activePlayers) -> Expect.equal activePlayers [levi;tim;levi] "Expected active player to be chosen by random number"
+            | Error(e, _) -> failtest $"Unexpected error: {e}"
+        }
     ]
     
     

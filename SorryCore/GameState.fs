@@ -39,6 +39,12 @@ let getPlayers game =
     | SettingUp(_) -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
+let getActivePlayer game = 
+    match game with
+    | Drawing(gameState) -> Ok(gameState.ActivePlayer)
+    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | _ -> Error(game, "Not implemented")
+    
 // Commands
 let tryAddPlayer name color game =
     match game with
@@ -57,7 +63,7 @@ let tryAddPlayer name color game =
     
 /// startGame should be called when you are done adding players and configuring settings
 /// and ready to begin the game.
-let startGame game =
+let startGame random game =
     match game with
     | SettingUp(setupState) ->
         let startGameRules : ValidationRule<SetupState> list =
