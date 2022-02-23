@@ -117,8 +117,6 @@ let startGameTests =
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
         
-        // @TODO - deck should be shuffled
-        
         test "There should be 3 tokens of each color" {
             let num = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
