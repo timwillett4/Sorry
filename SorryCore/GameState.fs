@@ -53,11 +53,10 @@ let getAvailableActions game =
     | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
-let getCurrentCard game = 
+let getDrawnCard game = 
     match game with
-    | Drawing _ -> Ok(Some(Card.Four))
-    | SettingUp _ -> Error(game, "Game is still in setup state")
-    | _ -> Error(game, "Not implemented")
+    | ChoosingAction(game) -> Some(game.DrawnCard)
+    | _ -> None
     
 // Commands
 let tryAddPlayer name color game =
