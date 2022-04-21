@@ -1,5 +1,6 @@
 ﻿module SorryFSharpConsole.Display
 
+open FSharp.Core.Extensions.Result
 open System
 open Sorry.Core
 
@@ -108,3 +109,39 @@ let drawBoard tokenPositions =
     Console.Clear();
     [0..15] |> List.iter (fun _ -> drawRow())
     [0..15] |> List.iter (fun _ -> drawBorder())
+
+let rec printBoardState game =
+    
+    let printTokenPosition tokenPosition =
+       printfn "Board State:"
+       tokenPosition |> Map.iter (fun (color, id) position -> printfn $"[%A{color}] Token %A{id} is at board position: %A{position}")
+       printfn ""
+
+    let rec printActivePlayer activePlayer =
+        printfn $"Active Player: %A{activePlayer}"
+        printfn ""
+       
+    let printDrawnCard card =
+        match card with
+        | Some(card) ->
+            printfn $"Drawn Card: %A{card}"
+            printfn ""
+        | None -> ()
+        
+    let printAvailableActions availableActions =
+        printfn "Avialable Actions:"
+        availableActions
+        |> List.iteri (fun i action -> printfn $"Action[%i{i}]: %A{action}")
+        printfn ""
+
+    result {
+        let! tokenPositions = game |> GameState.getTokenPositions
+        let! activePlayer = game |> GameState.getActivePlayer
+        let drawnCard = game |> GameState.getDrawnCard 
+        let! availableActions = game |> GameState.getAvailableActions
+        
+        tokenPositions |> printTokenPosition
+        activePlayer |> printActivePlayer
+        drawnCard |> printDrawnCard
+        availableActions |> printAvailableActions
+    }

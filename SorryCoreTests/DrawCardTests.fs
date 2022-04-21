@@ -39,4 +39,6 @@ let drawCardTests =
             | Ok(None) -> failtest "Expected card to be drawn"
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
+        
+        // test try draw card twice in a row should raise error?
     ]

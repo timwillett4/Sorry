@@ -52,13 +52,15 @@ let main argv =
             printfn "%A" <|error
             addPlayer game playerIndex
         
-    let game = seq { for i in 1..nPlayers -> i } |> Seq.fold addPlayer game
+    let game = [ 1..nPlayers ] |> List.fold addPlayer game
     
     let r = result {
         let! game = game |> GameState.tryStartGame (fun () -> Random(DateTime.Now.Millisecond).Next())
-        let! tokenPositions = game |> GameState.getTokenPositions
         
-        tokenPositions |> drawBoard
+        // @TODO - game loop
+        let! game = game |> printBoardState
+        // @TODO - choose action
+        // @TODO - check win condition (match game state end on game over recurse on others?)
         
         return game
     }
