@@ -1,6 +1,8 @@
 ﻿[<AutoOpen>]
 module Sorry.Core.DomainTypes
 
+open Sorry.Core
+
 /// The color enum represent the four possible colors players can choose from
 type Color =
     | Green = 0
@@ -38,7 +40,7 @@ type Pawn = {
 
 type Action =
     | DrawCard
-    
+    | MovePawn of color:Color*pawnID:PawnID*spaces:int 
 let newDeck = [
     // 5 ones, 4 of every other card
     Card.One

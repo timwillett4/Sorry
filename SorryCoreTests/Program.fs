@@ -1,7 +1,4 @@
-﻿open Sorry.Core.Tests
-open Sorry.Core.Tests.CreateGameTests
-open Expecto
-open System
+﻿open Expecto
 
 [<EntryPoint>]
 let main argv =

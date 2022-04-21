@@ -121,3 +121,11 @@ let tryDrawCard game =
         let newDeck = topCut @ bottomCut.Tail
         Ok(ChoosingAction({GameState={gameState with Deck=newDeck};DrawnCard=drawnCard}))
     | _ -> Error(game, "Can only draw a card when game is in draw state")
+
+let tryChooseAction action game =
+    match game with
+    | Drawing(gameState) ->
+        match action with
+        | DrawCard -> game |> tryDrawCard
+        | _ -> Error(game, "Illegal action")
+    | _ -> Error(game, "Unimplemented")
