@@ -40,7 +40,9 @@ type Pawn = {
 
 type Action =
     | DrawCard
-    | MovePawn of color:Color*pawnID:PawnID*spaces:int 
+    | MovePawn of color:Color*pawnID:PawnID*spaces:int
+    | PassTurn // Allowed only when no other actions are legal
+
 let newDeck = [
     // 5 ones, 4 of every other card
     Card.One

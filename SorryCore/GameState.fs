@@ -47,9 +47,27 @@ let getActivePlayer game =
     | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
-let getAvailableActions game = 
+let getAvailableActions game =
+    let canMoveAnyPieceOutOfStart activeColor boardPositions =
+       boardPositions
+       |> Map.toList
+       |> List.filter (fun ((color, _), position) -> color = activeColor && position = BoardPosition.Start(color))
+       |> List.map (fun ((color, pawnID), _) -> Action.MovePawn(color, pawnID, 1))
+       
     match game with
     | Drawing _ -> Ok([Action.DrawCard])
+    | ChoosingAction(game) ->
+        let activeColor = game.GameState.ActivePlayer.Color
+        let boardPositions = game.GameState.TokenPositions
+       
+        match game.DrawnCard with
+        | Card.One ->
+            // @TODO - find more elequent way to build rules
+            Ok(canMoveAnyPieceOutOfStart activeColor boardPositions)
+        | Card.Two ->
+            Ok(canMoveAnyPieceOutOfStart activeColor boardPositions)
+        | _ ->
+            Ok([Action.PassTurn])
     | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
