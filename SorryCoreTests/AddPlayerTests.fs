@@ -38,7 +38,7 @@ let addPlayerTests =
             | Error(_) -> failtest "Unexpected error adding player"
         }
         
-        test "Choosing a color that was already take should return an error" {
+        test "Choosing a color that was already taken should return an error" {
             let gameState = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Corbin" Color.Red

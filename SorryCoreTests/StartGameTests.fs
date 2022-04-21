@@ -7,10 +7,11 @@ open Expecto
 [<Tests>]
 let startGameTests =  
     testList "Start Game Tests" [
-        test "Starting a game when game is not in setup state should return an error" {
+        
+        test "Starting a game when a game is in the game over state should return an error" {
             let gameState = result {
                 let game = GameOver({Winner={Name="Levi";Color=Color.Red}})
-                let! game = game |> GameState.startGame (fun () -> 1)
+                let! game = game |> GameState.tryStartGame (fun () -> 1)
                 return game
             }
                 
@@ -18,9 +19,10 @@ let startGameTests =
         }
         
         test "Starting a game with only 1 player should return an error" {
+            
             let gameState = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.startGame (fun () -> 1)
+                let! game = game |> GameState.tryStartGame (fun () -> 1)
                 return game
             }
                 
@@ -28,11 +30,11 @@ let startGameTests =
         }
         
         
-        test "Starting a game with 2 or more players should transition game to draw state" {
+        test "Starting a game with 2 or more players should transition the game to draw state" {
             let gameState = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame (fun () -> 1)
+                let! game = game |> GameState.tryStartGame (fun () -> 1)
                 
                 return game
             }
@@ -46,7 +48,7 @@ let startGameTests =
             let numCardsInDeck = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame (fun () -> 1)
+                let! game = game |> GameState.tryStartGame (fun () -> 1)
                 
                 let numCards =
                     match game with
@@ -65,7 +67,7 @@ let startGameTests =
             let num = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame (fun () -> 1)
+                let! game = game |> GameState.tryStartGame (fun () -> 1)
                 let! tokens = game |> GameState.getTokenPositions
                 
                 let countColor color game =
@@ -85,7 +87,7 @@ let startGameTests =
             let allPiecesOnHomeSquare = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame (fun () -> 1)
+                let! game = game |> GameState.tryStartGame (fun () -> 1)
                 let! tokens = game |> GameState.getTokenPositions
                     
                 return tokens |> Map.forall (fun (color, _) position -> position = BoardPosition.Start(color))
@@ -100,7 +102,7 @@ let startGameTests =
             let players = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame (fun () -> 1)
+                let! game = game |> GameState.tryStartGame (fun () -> 1)
                 
                 return! game |> GameState.getPlayers
             }
@@ -110,18 +112,17 @@ let startGameTests =
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
         
-        test "When a game is started, the Active player should be chosen according to the random number method" {
-            let random0() = 0
-            let random1() = 1
-            let random2() = 2
-            
+        test "When a game is started, the active player should be chosen according to the random number method" {
+            let fakeRandomNumberGenerator0() = 0
+            let fakeRandomNumberGenerator1() = 1
+            let fakeRandomNumberGenerator2() = 2
             
             let activePlayers = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game1 = game |> GameState.startGame random0
-                let! game2 = game |> GameState.startGame random1
-                let! game3 = game |> GameState.startGame random2
+                let! game1 = game |> GameState.tryStartGame fakeRandomNumberGenerator0
+                let! game2 = game |> GameState.tryStartGame fakeRandomNumberGenerator1
+                let! game3 = game |> GameState.tryStartGame fakeRandomNumberGenerator2
                 
                 let! activePlayer1 = game1 |> GameState.getActivePlayer
                 let! activePlayer2 = game2 |> GameState.getActivePlayer
@@ -138,12 +139,11 @@ let startGameTests =
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
         
-        test "Only action for newly created game should be draw card" {
-            
+        test "The only action for a newly created game should be 'draw card'" {
             let availableActions = result {
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.startGame (fun () -> 0)
+                let! game = game |> GameState.tryStartGame (fun () -> 0)
                 
                 return! game |> GameState.getAvailableActions
             }
@@ -153,5 +153,4 @@ let startGameTests =
             | Error(e, _) -> failtest $"Unexpected error: {e}"
         }
     ]
-    
     

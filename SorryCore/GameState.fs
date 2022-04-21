@@ -32,31 +32,31 @@ let getAvailableColors game =
 let getTokenPositions game = 
     match game with
     | Drawing(gameState) -> Ok(gameState.TokenPositions)
-    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
 let getPlayers game = 
     match game with
     | Drawing(gameState) -> Ok(gameState.Players)
-    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
 let getActivePlayer game = 
     match game with
     | Drawing(gameState) -> Ok(gameState.ActivePlayer)
-    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
 let getAvailableActions game = 
     match game with
-    | Drawing(_) -> Ok([Action.DrawCard])
-    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | Drawing _ -> Ok([Action.DrawCard])
+    | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
 let getCurrentCard game = 
     match game with
-    | Drawing(_) -> Ok(None)
-    | SettingUp(_) -> Error(game, "Game is still in setup state")
+    | Drawing _ -> Ok(Some(Card.Four))
+    | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
 // Commands
@@ -75,9 +75,16 @@ let tryAddPlayer name color game =
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only add players when game is in setup state")
     
-/// startGame should be called when you are done adding players and configuring settings
+/// <summary>
+/// <para>
+/// try startGame should be called when you are done adding players and configuring settings
 /// and ready to begin the game.
-let startGame random game =
+/// </para>
+/// <para>
+/// It will return an error if the setup criteria has not been met
+/// </para>
+/// </summary>
+let tryStartGame random game =
     match game with
     | SettingUp(setupState) ->
         let startGameRules : ValidationRule<SetupState> list =
@@ -105,4 +112,13 @@ let startGame random game =
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only start a game that is still in setup state")
                  
-                 
+let tryDrawCard game =
+    match game with
+    | Drawing(gameState) ->
+        // for simplicity sake, rather than shuffle deck, draw random card each time
+        let drawIndex = gameState.RandomNumberGenerator() % gameState.Deck.Length
+        let topCut, bottomCut = gameState.Deck |> List.splitAt drawIndex
+        let drawnCard = bottomCut.Head
+        let newDeck = topCut @ bottomCut.Tail
+        Ok(ChoosingAction({GameState={gameState with Deck=newDeck};DrawnCard=drawnCard}))
+    | _ -> Error(game, "Can only draw a card when game is in draw state")

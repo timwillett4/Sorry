@@ -6,11 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Display.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SorryCore\SorryCore.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentColorConsole" Version="2.0.1" />
   </ItemGroup>
 
 </Project>

@@ -1,9 +1,6 @@
 ﻿[<AutoOpen>]
 module Sorry.Core.DomainTypes
 
-open System.Security.Cryptography
-open Sorry.Core
-
 /// The color enum represent the four possible colors players can choose from
 type Color =
     | Green = 0
@@ -104,9 +101,6 @@ let newDeck = [
 type Player = {
     Name : string    
     Color : Color
-    // Keep it simpler for now
-    //Age : Int0to100.T
-    //Name : Name.T
 }
     
 /// BoardPosition Represents all of the possible positions on a sorry board.

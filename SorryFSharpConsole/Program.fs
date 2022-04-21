@@ -1,8 +1,8 @@
 ﻿// Learn more about F# at http://fsharp.org
-
 open System
 open Sorry.Core
-open Sorry.Core.GameState
+open FSharp.Core.Extensions.Result
+open SorryFSharpConsole.Display
 
 [<EntryPoint>]
 let main argv =
@@ -46,11 +46,21 @@ let main argv =
         let color = chooseColor readChar
         printfn ""
     
-        match game |> tryAddPlayer playerName color with
+        match game |> GameState.tryAddPlayer playerName color with
         | Ok(game) -> game
         | Error(gameSate, error:string) ->
             printfn "%A" <|error
             addPlayer game playerIndex
         
-    let game = seq { for i in 1..nPlayers -> i } |> Seq.fold addPlayer game 
+    let game = seq { for i in 1..nPlayers -> i } |> Seq.fold addPlayer game
+    
+    let r = result {
+        let! game = game |> GameState.tryStartGame (fun () -> Random(DateTime.Now.Millisecond).Next())
+        let! tokenPositions = game |> GameState.getTokenPositions
+        
+        tokenPositions |> drawBoard
+        
+        return game
+    }
+    
     0 // return an integer exit code 
