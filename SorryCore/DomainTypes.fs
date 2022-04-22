@@ -112,18 +112,32 @@ type Player = {
 /// 5 safety squares and home square
 /// 
 /// The numbering system for outer squares is as follows:
-///     The first square that a color moves to outside of it's home is square 0.
+///     The first square that a color moves to outside of it's start is square Color * 0.
 ///     The next square it moves to is 1, etc.
+///     When you reach the next players opening square it resets to NextColor * 0
 ///
 /// <example>
-///     (0,0) (1,0) ... ... (15,0)
-///     (0,1) ... ...       (15,1)
-///     ...
-///     ...
-///     (0,15) (1,15)  ...  (15,15)
-/// _   ^                         _ R14
-/// _                           > _ B0
-/// ...
+///         R14/B0
+///          | |
+///        _ _ _ _ _ _ _ _ _ _ _ _ _ 
+///        _   _                   _ <- B14
+///        _   _       _ _ _ _ _ _ _ <- Y0
+///        _   _                   _
+///        _   _                   _
+///        _   _                   _
+///        _   _                   _
+///        _                       _
+///        _                       _
+///        _                       _
+///        _                   _   _
+///        _                   _   _
+///        _                   _   _
+///        _                   _   _
+/// R0->   _ _ _ _ _ _ _       _   _
+/// G14->  _                   _   _
+///        _ _ _ _ _ _ _ _ _ _ _ _ _
+///                            | |
+///                           G0/Y14
 /// </example>
 
 type OuterCoordinate =
@@ -142,7 +156,6 @@ type OuterCoordinate =
     | Twelve = 12
     | Thirteen = 13
     | Fourteen = 14
-    | Fifteen = 15
     
 type SafetySquare =
     | Zero = 0
@@ -152,7 +165,7 @@ type SafetySquare =
     | Four = 4
     
 type BoardPosition = 
-    | Outer of OuterCoordinate * OuterCoordinate
+    | Outer of Color * OuterCoordinate
     | Safety of Color * SafetySquare
     | Start of Color   
     | Home of Color

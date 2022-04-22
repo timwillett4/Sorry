@@ -146,4 +146,8 @@ let tryChooseAction action game =
         match action with
         | DrawCard -> game |> tryDrawCard
         | _ -> Error(game, "Illegal action")
+    | ChooseActionState(gameState) ->
+        match action with
+        | MovePawn(color,pawnID,moveIncrement) -> 
+        | PassTurn -> gameState
     | _ -> Error(game, "Unimplemented")
