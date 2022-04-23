@@ -324,5 +324,40 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
             ]
+            
+            testList "Five Basic Movement Tests" [
+                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Five }
+                
+                test $"When three is draw player should be able to move pawn five space" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    let expectedActions = [
+                        Action.MovePawn(Color.Green, PawnID.One, 5)
+                        Action.MovePawn(Color.Green, PawnID.Two, 5)
+                        Action.MovePawn(Color.Green, PawnID.Three, 5)
+                        ]
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece by 5"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(Color.Green, PawnID.One, 5))
+                
+                test $"Expect Token Positions to be updated when moving by 5" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.One] (Outer(Color.Green, OuterCoordinate.Six))
+                            "Expected pawn 1 to be moved 5 space to green 6"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect turn to move to next player" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
         ]
     ]

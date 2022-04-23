@@ -78,6 +78,8 @@ let getAvailableActions game =
                           canMoveAnyPieceNotOnStart 3 activeColor boardPositions
                       | Card.Four ->
                           canMoveAnyPieceNotOnStart -4 activeColor boardPositions
+                      | Card.Five ->
+                          canMoveAnyPieceNotOnStart 5 activeColor boardPositions
                       | _ -> []
         match actions with
         | [] -> Ok([Action.PassTurn])
