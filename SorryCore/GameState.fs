@@ -76,6 +76,8 @@ let getAvailableActions game =
                         @(canMoveAnyPieceNotOnStart 2 activeColor boardPositions)
                       | Card.Three ->
                           canMoveAnyPieceNotOnStart 3 activeColor boardPositions
+                      | Card.Four ->
+                          canMoveAnyPieceNotOnStart -4 activeColor boardPositions
                       | _ -> []
         match actions with
         | [] -> Ok([Action.PassTurn])
@@ -165,7 +167,7 @@ let tryChooseAction action game =
     let movePawn color pawnID moveIncrement gameState =
        
        // @TODO - add to core extensions math
-       let wrap max n = (n + max % max)
+       let wrap max n = (n + max) % max
        let nColors = 4
        let nSpacePerColor = 15
        
@@ -178,7 +180,6 @@ let tryChooseAction action game =
            | Safety(color, safetySquare) when color = localColor ->
                (safetySquare |> int) + 60
            | Outer(color, coord) ->
-               // r
                // calculate how many colors away from the local color we are
                // Example: Colors are in order Green->Red->Blue->Yellow
                let colorDist = (color |> int) - (localColor |> int) |> wrap nColors
@@ -193,7 +194,12 @@ let tryChooseAction action game =
                let colorDiff = localPosition / nSpacePerColor
                let outerCoord = localPosition - (colorDiff * nSpacePerColor)
                let color = ((color |> int) + colorDiff) % nColors |> enum<Color>
-               Outer(color, localPosition |> enum)
+               Outer(color, outerCoord |> enum)
+           // This occurs when you get backward and are near opening sqaure
+           | outer when localPosition < 0 && localPosition >= -3 ->
+               let colorInt = ((localColor |> int) - 1) |> wrap nColors
+               let color = colorInt |> enum
+               Outer(color, nSpacePerColor + localPosition |> enum)
            | safety when localPosition >= 61 && localPosition <= 65 ->
                Safety(localColor, (localPosition - 60) |> enum)
            | home when localPosition = 66 -> Home(color)
@@ -206,6 +212,9 @@ let tryChooseAction action game =
                assert(moveIncrement = 1)
                Outer(color, OuterCoordinate.One)
            | position ->
+               let local = position |> toLocal color
+               let newLocal = local + moveIncrement
+               let newBoardPosition = newLocal |> toBoardPosition color
                ((position |> toLocal color) + moveIncrement) |> toBoardPosition color
        let newBoardState = gameState.TokenPositions.Add ((color, pawnID), newPosition)
        {gameState with TokenPositions=newBoardState}

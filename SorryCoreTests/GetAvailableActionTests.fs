@@ -278,5 +278,51 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
             ]
+            
+            testList "Four Basic Movement Tests" [
+                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Four }
+                
+                test $"When three is draw player should be able to move pawn backwards four spaces" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    let expectedActions = [
+                        Action.MovePawn(Color.Green, PawnID.One, -4)
+                        Action.MovePawn(Color.Green, PawnID.Two, -4)
+                        Action.MovePawn(Color.Green, PawnID.Three, -4)
+                        ]
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece backwards 4"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(Color.Green, PawnID.Two, -4))
+                
+                test $"Expect Token Positions to be updated when moving backwards 4" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.Two] (Outer(Color.Blue, OuterCoordinate.Twelve))
+                            "Expected pawn 1 to be moved backwards 4 spaces to yellow 12"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect turn to move to next player" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(Color.Green, PawnID.One, -4))
+                
+                test $"Expect Token to wrap behind first square moving backwards 4 from opening square" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.One] (Outer(Color.Yellow, OuterCoordinate.Twelve))
+                            "Expected pawn 1 to be moved backwards 4 spaces to yellow 12"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
         ]
     ]
