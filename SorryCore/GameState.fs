@@ -74,7 +74,9 @@ let getAvailableActions game =
                @(canMoveAnyPieceNotOnStart 1 activeColor boardPositions)
             )
         | Card.Two ->
-            Ok(canMoveAnyPieceOutOfStart activeColor boardPositions)
+            Ok((canMoveAnyPieceOutOfStart activeColor boardPositions)
+               @(canMoveAnyPieceNotOnStart 2 activeColor boardPositions)
+            )
         | _ ->
             Ok([Action.PassTurn])
         // Should this return add player/start game???

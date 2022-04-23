@@ -165,9 +165,9 @@ let getAvailableActionTests =
                    RandomNumberGenerator = fun () -> 0
                    Players = [levi;dad]
                    TokenPositions = [
-                       (Color.Green, PawnID.One), BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
-                       (Color.Green, PawnID.Two), BoardPosition.Outer(Color.Green, OuterCoordinate.Fifteen)
-                       (Color.Green, PawnID.Three), BoardPosition.Start(Color.Green)
+                       (Color.Green, PawnID.One), BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                       (Color.Green, PawnID.Two), BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
+                       (Color.Green, PawnID.Three), BoardPosition.Outer(Color.Red, OuterCoordinate.One)
                        
                        (Color.Blue, PawnID.One), BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
                        (Color.Blue, PawnID.Two), BoardPosition.Start(Color.Blue)
@@ -197,7 +197,7 @@ let getAvailableActionTests =
                     
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.One] (Outer(Color.Green, OuterCoordinate.Three)) "Expected pawn 1 to be moved 1 space to green 3"
+                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.One] (Outer(Color.Green, OuterCoordinate.Two)) "Expected pawn 1 to be moved 1 space to green 2"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
@@ -206,6 +206,40 @@ let getAvailableActionTests =
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
                         Expect.equal gameState.ActivePlayer dad "Expected active player to switch to dad"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
+            
+            testList "Two Basic Movement Tests" [
+                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Two }
+                
+                test $"When two is draw player should be able to move pawn two space" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    let expectedActions = [
+                        Action.MovePawn(Color.Green, PawnID.One, 2)
+                        Action.MovePawn(Color.Green, PawnID.Two, 2)
+                        Action.MovePawn(Color.Green, PawnID.Three, 2)
+                        ]
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece by 2"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(Color.Green, PawnID.One, 2))
+                
+                test $"Expect Token Positions to be updated when moving by 2" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.One] (Outer(Color.Green, OuterCoordinate.Three)) "Expected pawn 1 to be moved 2 space to green 3"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect player to draw again" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.ActivePlayer levi "Expected player to draw again"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
             ]
