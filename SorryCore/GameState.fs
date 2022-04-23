@@ -79,6 +79,8 @@ let getAvailableActions game =
                       | Card.Three -> canMoveAnyPieceNotOnStart 3
                       | Card.Four -> canMoveAnyPieceNotOnStart -4
                       | Card.Five -> canMoveAnyPieceNotOnStart 5
+                      | Card.Eight -> canMoveAnyPieceNotOnStart 8
+                      | Card.Twelve -> canMoveAnyPieceNotOnStart 12
                       | _ -> []
                       
         match actions with

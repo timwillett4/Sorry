@@ -359,5 +359,75 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
             ]
+            
+            testList "8 Basic Movement Tests" [
+                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Eight }
+                
+                test $"When three is draw player should be able to move pawn eight space" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    let expectedActions = [
+                        Action.MovePawn(Color.Green, PawnID.One, 8)
+                        Action.MovePawn(Color.Green, PawnID.Two, 8)
+                        Action.MovePawn(Color.Green, PawnID.Three, 8)
+                        ]
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece by 8"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(Color.Green, PawnID.One, 8))
+                
+                test $"Expect Token Positions to be updated when moving by 8" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.One] (Outer(Color.Green, OuterCoordinate.Nine))
+                            "Expected pawn 1 to be moved 8 space to green 9"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect turn to move to next player" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
+            
+            testList "12 Basic Movement Tests" [
+                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Twelve }
+                
+                test $"When three is draw player should be able to move pawn twelve space" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    let expectedActions = [
+                        Action.MovePawn(Color.Green, PawnID.One, 12)
+                        Action.MovePawn(Color.Green, PawnID.Two, 12)
+                        Action.MovePawn(Color.Green, PawnID.Three, 12)
+                        ]
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece by twelve"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(Color.Green, PawnID.One, 12))
+                
+                test $"Expect Token Positions to be updated when moving by 12" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.One] (Outer(Color.Green, OuterCoordinate.Thirteen))
+                            "Expected pawn 1 to be moved 12 space to green 13"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect turn to move to next player" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
         ]
     ]
