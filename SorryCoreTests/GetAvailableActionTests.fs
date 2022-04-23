@@ -27,7 +27,7 @@ let getAvailableActionTests =
                ActivePlayer = levi
             }
 
-        testList "InitialGameState Tests" [
+        testList "Initial State Tests" [
             
             let gameState = Drawing(initialGameState)
             
@@ -92,7 +92,7 @@ let getAvailableActionTests =
             ]
         )
             
-        [Card.One; Card.Two]|> List.collect canMoveFromStart |> testList "Can only move from start with one or two"
+        [Card.One; Card.Two]|> List.collect canMoveFromStart |> testList "Can only move from start with one or two tests"
         
         test "When one is drawn moving from start should change active player" {
             let initialGameState = ChoosingAction{GameState = initialGameState; DrawnCard = Card.One }
@@ -154,5 +154,60 @@ let getAvailableActionTests =
          Card.Eleven
          Card.Twelve
          Card.Sorry]
-        |> List.collect canNotMoveFromStart |> testList "Can not move from start with any card other than one or two"
+        |> List.collect canNotMoveFromStart |> testList "Can not move from start with any card other than one or two test"
+        
+        testList "Basic Movement Tests" [
+            let levi = {Name="Levi"; Color=Color.Green}
+            let dad = {Name="Dad"; Color=Color.Blue}
+            
+            let gameState = {
+                   Deck = newDeck
+                   RandomNumberGenerator = fun () -> 0
+                   Players = [levi;dad]
+                   TokenPositions = [
+                       (Color.Green, PawnID.One), BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
+                       (Color.Green, PawnID.Two), BoardPosition.Outer(Color.Green, OuterCoordinate.Fifteen)
+                       (Color.Green, PawnID.Three), BoardPosition.Start(Color.Green)
+                       
+                       (Color.Blue, PawnID.One), BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                       (Color.Blue, PawnID.Two), BoardPosition.Start(Color.Blue)
+                       (Color.Blue, PawnID.Three), BoardPosition.Start(Color.Blue)
+                   ] |> Map.ofList
+                   ActivePlayer = levi
+                }
+            
+            testList "One Basic Movement Tests" [
+                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.One }
+                
+                test $"When one is draw player should be able to move pawn one space" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    let expectedActions = [
+                        Action.MovePawn(Color.Green, PawnID.One, 1)
+                        Action.MovePawn(Color.Green, PawnID.Two, 1)
+                        Action.MovePawn(Color.Green, PawnID.Three, 1)
+                        ]
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece by 1"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(Color.Green, PawnID.One, 1))
+                
+                test $"Expect Token Positions to be updated when moving by 1" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[Color.Green, PawnID.One] (Outer(Color.Green, OuterCoordinate.Three)) "Expected pawn 1 to be moved 1 space to green 3"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect active player to be updated" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.ActivePlayer dad "Expected active player to switch to dad"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
+        ]
     ]

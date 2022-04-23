@@ -55,6 +55,12 @@ let getAvailableActions game =
        |> List.filter (fun ((color, _), position) -> color = activeColor && position = BoardPosition.Start(color))
        |> List.map (fun ((color, pawnID), _) -> Action.MovePawn(color, pawnID, 1))
        
+    let canMoveAnyPieceNotOnStart spaces activeColor boardPositions =
+       boardPositions
+       |> Map.toList
+       |> List.filter (fun ((color, _), position) -> color = activeColor && position <> BoardPosition.Start(color))
+       |> List.map (fun ((color, pawnID), _) -> Action.MovePawn(color, pawnID, spaces))
+       
     match game with
     | Drawing _ -> Ok([Action.DrawCard])
     | ChoosingAction(game) ->
@@ -64,7 +70,9 @@ let getAvailableActions game =
         match game.DrawnCard with
         | Card.One ->
             // @TODO - find more eloquent way to build rules
-            Ok(canMoveAnyPieceOutOfStart activeColor boardPositions)
+            Ok((canMoveAnyPieceOutOfStart activeColor boardPositions)
+               @(canMoveAnyPieceNotOnStart 1 activeColor boardPositions)
+            )
         | Card.Two ->
             Ok(canMoveAnyPieceOutOfStart activeColor boardPositions)
         | _ ->
@@ -155,7 +163,7 @@ let tryChooseAction action game =
     let movePawn color pawnID moveIncrement gameState =
        
        // @TODO - add to core extensions math
-       let wrap n max = (n + max % max)
+       let wrap max n = (n + max % max)
        let nColors = 4
        let nSpacePerColor = 15
        
@@ -167,7 +175,7 @@ let tryChooseAction action game =
            | Home(color) when color = localColor -> 66
            | Safety(color, safetySquare) when color = localColor ->
                (safetySquare |> int) + 60
-           | Outer(coord, color) ->
+           | Outer(color, coord) ->
                // r
                // calculate how many colors away from the local color we are
                // Example: Colors are in order Green->Red->Blue->Yellow
@@ -195,23 +203,23 @@ let tryChooseAction action game =
            | Start(color) ->
                assert(moveIncrement = 1)
                Outer(color, OuterCoordinate.One)
-           | position -> ((position |> toLocal color) + moveIncrement) |> toBoardPosition color
+           | position ->
+               ((position |> toLocal color) + moveIncrement) |> toBoardPosition color
        let newBoardState = gameState.TokenPositions.Add ((color, pawnID), newPosition)
        {gameState with TokenPositions=newBoardState}
        
-      
-    // @TODO - verify it is valid move
     result {
         let! availableActions = game |> getAvailableActions
         
         if availableActions |> List.contains action then
-            // We can assume all actions are valid below and just execute
-            // the action
+            // Since we have validated that it is an available action we can
+            // now assume all actions are valid below and just update without worry
+            // of it putting game in invalid state
             return! match game with
-                    | Drawing(gameState) ->
+                    | Drawing(_) ->
                         match action with
                         | DrawCard -> game |> tryDrawCard
-                        | _ -> Error(game, "Illegal action")
+                        | _ -> Error(game, "Can only draw card when game is in draw state")
                     | ChoosingAction(gameState) ->
                         match action with
                         | MovePawn(color,pawnID,moveIncrement) ->
