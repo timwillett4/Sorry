@@ -49,17 +49,11 @@ let getActivePlayer game =
     | _ -> Error(game, "Not implemented")
     
 let getAvailableActions game =
-    let canMoveAnyPieceOutOfStart activeColor boardPositions =
-       boardPositions
-       |> Map.toList
-       |> List.filter (fun ((color, _), position) -> color = activeColor && position = BoardPosition.Start(color))
-       |> List.map (fun ((color, pawnID), _) -> Action.MovePawn(color, pawnID, 1))
-       
-    let canMoveAnyPieceNotOnStart spaces activeColor boardPositions =
-       boardPositions
-       |> Map.toList
-       |> List.filter (fun ((color, _), position) -> color = activeColor && position <> BoardPosition.Start(color))
-       |> List.map (fun ((color, pawnID), _) -> Action.MovePawn(color, pawnID, spaces))
+    let canMoveAnyPiece predicate activeColor boardPositions spaces =
+        boardPositions
+        |> Map.toList
+        |> List.filter (fun ((color, _), position) -> (color, position) ||> predicate)
+        |> List.map (fun ((color, pawnID), _) -> Action.MovePawn(color, pawnID, spaces))
        
     match game with
     | Drawing _ -> Ok([Action.DrawCard])
@@ -67,23 +61,30 @@ let getAvailableActions game =
         let activeColor = game.GameState.ActivePlayer.Color
         let boardPositions = game.GameState.TokenPositions
        
+        let canMoveAnyPieceOutOfStart = canMoveAnyPiece
+                                            (fun color position -> color = activeColor && position = Start(activeColor))
+                                            activeColor
+                                            boardPositions
+                                            1
+                                            
+        let canMoveAnyPieceNotOnStart = canMoveAnyPiece
+                                            (fun color position -> color = activeColor && position <> Start(activeColor))
+                                            activeColor
+                                            boardPositions
+                                           
+        
         let actions = match game.DrawnCard with
-                      | Card.One ->
-                        (canMoveAnyPieceOutOfStart activeColor boardPositions)
-                        @(canMoveAnyPieceNotOnStart 1 activeColor boardPositions)
-                      | Card.Two ->
-                        (canMoveAnyPieceOutOfStart activeColor boardPositions)
-                        @(canMoveAnyPieceNotOnStart 2 activeColor boardPositions)
-                      | Card.Three ->
-                          canMoveAnyPieceNotOnStart 3 activeColor boardPositions
-                      | Card.Four ->
-                          canMoveAnyPieceNotOnStart -4 activeColor boardPositions
-                      | Card.Five ->
-                          canMoveAnyPieceNotOnStart 5 activeColor boardPositions
+                      | Card.One ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 1)
+                      | Card.Two ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 2)
+                      | Card.Three -> canMoveAnyPieceNotOnStart 3
+                      | Card.Four -> canMoveAnyPieceNotOnStart -4
+                      | Card.Five -> canMoveAnyPieceNotOnStart 5
                       | _ -> []
+                      
         match actions with
         | [] -> Ok([Action.PassTurn])
         | actions -> Ok(actions)
+        
     | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
