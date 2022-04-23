@@ -67,19 +67,19 @@ let getAvailableActions game =
         let activeColor = game.GameState.ActivePlayer.Color
         let boardPositions = game.GameState.TokenPositions
        
-        match game.DrawnCard with
-        | Card.One ->
-            // @TODO - find more eloquent way to build rules
-            Ok((canMoveAnyPieceOutOfStart activeColor boardPositions)
-               @(canMoveAnyPieceNotOnStart 1 activeColor boardPositions)
-            )
-        | Card.Two ->
-            Ok((canMoveAnyPieceOutOfStart activeColor boardPositions)
-               @(canMoveAnyPieceNotOnStart 2 activeColor boardPositions)
-            )
-        | _ ->
-            Ok([Action.PassTurn])
-        // Should this return add player/start game???
+        let actions = match game.DrawnCard with
+                      | Card.One ->
+                        (canMoveAnyPieceOutOfStart activeColor boardPositions)
+                        @(canMoveAnyPieceNotOnStart 1 activeColor boardPositions)
+                      | Card.Two ->
+                        (canMoveAnyPieceOutOfStart activeColor boardPositions)
+                        @(canMoveAnyPieceNotOnStart 2 activeColor boardPositions)
+                      | Card.Three ->
+                          canMoveAnyPieceNotOnStart 3 activeColor boardPositions
+                      | _ -> []
+        match actions with
+        | [] -> Ok([Action.PassTurn])
+        | actions -> Ok(actions)
     | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
