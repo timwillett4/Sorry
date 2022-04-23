@@ -1,6 +1,7 @@
 ﻿module Sorry.Core.GameState
 
 open FSharp.Core.Extensions
+open FSharp.Core.Extensions.Result
 open FSharp.Core.Extensions.Validation
 open Sorry.Core
 
@@ -62,12 +63,13 @@ let getAvailableActions game =
        
         match game.DrawnCard with
         | Card.One ->
-            // @TODO - find more elequent way to build rules
+            // @TODO - find more eloquent way to build rules
             Ok(canMoveAnyPieceOutOfStart activeColor boardPositions)
         | Card.Two ->
             Ok(canMoveAnyPieceOutOfStart activeColor boardPositions)
         | _ ->
             Ok([Action.PassTurn])
+        // Should this return add player/start game???
     | SettingUp _ -> Error(game, "Game is still in setup state")
     | _ -> Error(game, "Not implemented")
     
@@ -141,13 +143,86 @@ let tryDrawCard game =
     | _ -> Error(game, "Can only draw a card when game is in draw state")
 
 let tryChooseAction action game =
-    match game with
-    | Drawing(gameState) ->
-        match action with
-        | DrawCard -> game |> tryDrawCard
-        | _ -> Error(game, "Illegal action")
-    | ChooseActionState(gameState) ->
-        match action with
-        | MovePawn(color,pawnID,moveIncrement) -> 
-        | PassTurn -> gameState
-    | _ -> Error(game, "Unimplemented")
+    
+    let updateActivePlayer gameState =
+       assert(gameState.Players |> List.contains gameState.ActivePlayer)
+       let currentIndex = gameState.Players |> List.findIndex (fun player -> player = gameState.ActivePlayer)
+       let nextIndex = currentIndex + 1 % gameState.Players.Length
+       {gameState with ActivePlayer=gameState.Players.[nextIndex]}
+       
+    // try move pawn or do we assume its legal
+    // as we already found available moves???
+    let movePawn color pawnID moveIncrement gameState =
+       
+       // @TODO - add to core extensions math
+       let wrap n max = (n + max % max)
+       let nColors = 4
+       let nSpacePerColor = 15
+       
+       // Converts to a 0(start) to 66(home) representing
+       // local coordinates for particular color
+       let toLocal localColor boardPosition =
+           match boardPosition with
+           | Start(color) when color = localColor -> 0
+           | Home(color) when color = localColor -> 66
+           | Safety(color, safetySquare) when color = localColor ->
+               (safetySquare |> int) + 60
+           | Outer(coord, color) ->
+               // r
+               // calculate how many colors away from the local color we are
+               // Example: Colors are in order Green->Red->Blue->Yellow
+               let colorDist = (color |> int) - (localColor |> int) |> wrap nColors
+               (colorDist * nSpacePerColor) + (coord |> int)
+           | _ ->
+               failwith $"Local Position must be between 0 - 66"
+
+       let toBoardPosition localColor localPosition =
+           match localPosition with
+           | start when localPosition = 0 -> Start(localColor)
+           | outer when localPosition >= 1 && localPosition <= 60 ->
+               let colorDiff = localPosition / nSpacePerColor
+               let outerCoord = localPosition - (colorDiff * nSpacePerColor)
+               let color = ((color |> int) + colorDiff) % nColors |> enum<Color>
+               Outer(color, localPosition |> enum)
+           | safety when localPosition >= 61 && localPosition <= 65 ->
+               Safety(localColor, (localPosition - 60) |> enum)
+           | home when localPosition = 66 -> Home(color)
+           | _ -> failwith $"Invalid board position"
+               
+       let currentPosition = gameState.TokenPositions.[color,pawnID]
+       let newPosition =
+           match currentPosition with 
+           | Start(color) ->
+               assert(moveIncrement = 1)
+               Outer(color, OuterCoordinate.One)
+           | position -> ((position |> toLocal color) + moveIncrement) |> toBoardPosition color
+       let newBoardState = gameState.TokenPositions.Add ((color, pawnID), newPosition)
+       {gameState with TokenPositions=newBoardState}
+       
+      
+    // @TODO - verify it is valid move
+    result {
+        let! availableActions = game |> getAvailableActions
+        
+        if availableActions |> List.contains action then
+            // We can assume all actions are valid below and just execute
+            // the action
+            return! match game with
+                    | Drawing(gameState) ->
+                        match action with
+                        | DrawCard -> game |> tryDrawCard
+                        | _ -> Error(game, "Illegal action")
+                    | ChoosingAction(gameState) ->
+                        match action with
+                        | MovePawn(color,pawnID,moveIncrement) ->
+                            let newGameState = gameState.GameState |> movePawn color pawnID moveIncrement
+                            match gameState.DrawnCard with
+                            | Card.Two -> Ok(Drawing(newGameState))
+                            | _ -> Ok(Drawing(newGameState |> updateActivePlayer))
+                        | PassTurn ->
+                        Ok(Drawing(gameState.GameState |> updateActivePlayer))
+                        | _ -> Error(game, "Unimplemented")
+                    | _ -> Error(game, "Unimplemented")
+        else            
+            return! Error(game, "Choosing Invalid Action")
+    }

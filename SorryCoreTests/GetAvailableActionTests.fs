@@ -81,7 +81,7 @@ let getAvailableActionTests =
                     | Ok(Drawing(gameState)) ->
                         Expect.equal
                             gameState.TokenPositions.[Color.Green, PawnID.One]
-                            (BoardPosition.Outer(Color.Green, OuterCoordinate.Zero))
+                            (BoardPosition.Outer(Color.Green, OuterCoordinate.One))
                             "Expected token one to be moved out of start space"
                     | _ -> failtest "Expected game to transition to drawState"
                     

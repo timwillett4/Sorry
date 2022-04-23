@@ -141,7 +141,6 @@ type Player = {
 /// </example>
 
 type OuterCoordinate =
-    | Zero = 0
     | One = 1
     | Two = 2
     | Three = 3
@@ -156,13 +155,14 @@ type OuterCoordinate =
     | Twelve = 12
     | Thirteen = 13
     | Fourteen = 14
+    | Fifteen = 15
     
 type SafetySquare =
-    | Zero = 0
     | One = 1
     | Two = 2
     | Three = 3
     | Four = 4
+    | Five = 5
     
 type BoardPosition = 
     | Outer of Color * OuterCoordinate
