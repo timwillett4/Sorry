@@ -80,6 +80,7 @@ let getAvailableActions game =
                       | Card.Four -> canMoveAnyPieceNotOnStart -4
                       | Card.Five -> canMoveAnyPieceNotOnStart 5
                       | Card.Eight -> canMoveAnyPieceNotOnStart 8
+                      | Card.Ten -> (canMoveAnyPieceNotOnStart 10)@(canMoveAnyPieceNotOnStart -1)
                       | Card.Twelve -> canMoveAnyPieceNotOnStart 12
                       | _ -> []
                       
@@ -180,30 +181,32 @@ let tryChooseAction action game =
        // local coordinates for particular color
        let toLocal localColor boardPosition =
            match boardPosition with
-           | Start(color) when color = localColor -> 0
-           | Home(color) when color = localColor -> 66
-           | Safety(color, safetySquare) when color = localColor ->
+           | Home(color)->
+               assert(color = localColor)
+               66
+           | Safety(color, safetySquare) ->
+               assert(color = localColor)
                (safetySquare |> int) + 60
            | Outer(color, coord) ->
                // calculate how many colors away from the local color we are
                // Example: Colors are in order Green->Red->Blue->Yellow
                let colorDist = (color |> int) - (localColor |> int) |> wrap nColors
                (colorDist * nSpacePerColor) + (coord |> int)
-           | _ ->
-               failwith $"Local Position must be between 0 - 66"
+           | Start(color) ->
+               assert(color = localColor)
+               failwith $"Start square is special square and can not be used with to local"
 
        let toBoardPosition localColor localPosition =
            match localPosition with
-           | start when localPosition = 0 -> Start(localColor)
            | outer when localPosition >= 1 && localPosition <= 60 ->
                let colorDiff = localPosition / nSpacePerColor
                let outerCoord = localPosition - (colorDiff * nSpacePerColor)
                let color = ((color |> int) + colorDiff) % nColors |> enum<Color>
                Outer(color, outerCoord |> enum)
-           // This occurs when you get backward and are near opening sqaure
-           | outer when localPosition < 0 && localPosition >= -3 ->
-               let colorInt = ((localColor |> int) - 1) |> wrap nColors
-               let color = colorInt |> enum
+           // This occurs when you are at or near the opening square and move backward
+           | outer when localPosition <= 0 && localPosition >= -3 ->
+               let color = ((localColor |> int) - 1) |> wrap nColors
+               let color = color |> enum
                Outer(color, nSpacePerColor + localPosition |> enum)
            | safety when localPosition >= 61 && localPosition <= 65 ->
                Safety(localColor, (localPosition - 60) |> enum)
@@ -211,6 +214,7 @@ let tryChooseAction action game =
            | _ -> failwith $"Invalid board position"
                
        let currentPosition = gameState.TokenPositions.[color,pawnID]
+       
        let newPosition =
            match currentPosition with 
            | Start(color) ->
@@ -221,7 +225,9 @@ let tryChooseAction action game =
                let newLocal = local + moveIncrement
                let newBoardPosition = newLocal |> toBoardPosition color
                ((position |> toLocal color) + moveIncrement) |> toBoardPosition color
+               
        let newBoardState = gameState.TokenPositions.Add ((color, pawnID), newPosition)
+       
        {gameState with TokenPositions=newBoardState}
        
     result {
