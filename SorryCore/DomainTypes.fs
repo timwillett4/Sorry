@@ -57,7 +57,7 @@ let BluePawn3 = {Color=Color.Blue;ID=PawnID.Three}
 type Action =
     | DrawCard
     | MovePawn of Pawn*spaces:int
-    | SwitchPawn of pawn1:Pawn*pawn2:Pawn
+    | SwitchPawns of pawn1:Pawn*pawn2:Pawn
     | PassTurn // Allowed only when no other actions are legal
 
 let newDeck = [

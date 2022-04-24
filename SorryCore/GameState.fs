@@ -49,30 +49,40 @@ let getActivePlayer game =
     | _ -> Error(game, "Not implemented")
     
 let getAvailableActions game =
-    let canMoveAnyPiece predicate activeColor boardPositions spaces =
-        boardPositions
-        |> Map.toList
-        |> List.filter (fun (pawn:Pawn, position) -> (pawn.Color, position) ||> predicate)
-        |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, spaces))
-       
     match game with
     | Drawing _ -> Ok([Action.DrawCard])
     | ChoosingAction(game) ->
         let activeColor = game.GameState.ActivePlayer.Color
         let boardPositions = game.GameState.TokenPositions
        
-        let canMoveAnyPieceOutOfStart = canMoveAnyPiece
-                                            (fun color position -> color = activeColor && position = Start(activeColor))
-                                            activeColor
-                                            boardPositions
-                                            1
+        let canMoveAnyPiece predicate spaces =
+            boardPositions
+            |> Map.toList
+            |> List.filter (fun (pawn, position) -> pawn.Color = activeColor && position |> predicate)
+            |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, spaces))
+            
+        let canMoveAnyPieceOutOfStart = canMoveAnyPiece (fun position -> position = Start(activeColor)) 1
                                             
-        let canMoveAnyPieceNotOnStart = canMoveAnyPiece
-                                            (fun color position -> color = activeColor && position <> Start(activeColor))
-                                            activeColor
-                                            boardPositions
-                                           
+        let canMoveAnyPieceNotOnStart = canMoveAnyPiece (fun position -> position <> Start(activeColor))
         
+        let canSwitchPlacesWithOpponentNotOnStartHomeOrSafety =
+            
+            let activePieces = boardPositions |> Map.filter (fun pawn _ -> pawn.Color = activeColor)
+            let opponentPieces = boardPositions |> Map.filter (fun pawn _ -> pawn.Color <> activeColor)
+            
+            let ableToSwitch boardPositions =
+                boardPositions
+                |> Map.toList
+                |> List.filter (fun (pawn:Pawn, position) -> position <> Start(pawn.Color))
+                |> List.map fst
+                
+            let activePiecesAbleToSwitch = activePieces |> ableToSwitch
+            let opponentPieceAbleToSwitch = opponentPieces |> ableToSwitch 
+            
+            (activePiecesAbleToSwitch, opponentPieceAbleToSwitch)
+            ||> List.allPairs
+            |> List.map (fun (activePawn, opponentPawn) -> Action.SwitchPawns(activePawn, opponentPawn))
+
         let actions = match game.DrawnCard with
                       | Card.One ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 1)
                       | Card.Two ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 2)
@@ -81,6 +91,7 @@ let getAvailableActions game =
                       | Card.Five -> canMoveAnyPieceNotOnStart 5
                       | Card.Eight -> canMoveAnyPieceNotOnStart 8
                       | Card.Ten -> (canMoveAnyPieceNotOnStart 10)@(canMoveAnyPieceNotOnStart -1)
+                      | Card.Eleven -> (canMoveAnyPieceNotOnStart 11)@canSwitchPlacesWithOpponentNotOnStartHomeOrSafety
                       | Card.Twelve -> canMoveAnyPieceNotOnStart 12
                       | _ -> []
                       
@@ -230,6 +241,14 @@ let tryChooseAction action game =
        
        {gameState with TokenPositions=newBoardState}
        
+    let switchPawns pawn1 pawn2 (gameState:DrawState) =
+        let pawn1Pos = gameState.TokenPositions.[pawn1]
+        let pawn2Pos = gameState.TokenPositions.[pawn2]
+        let swap1 = gameState.TokenPositions.Add(pawn2, pawn1Pos)
+        let swap2 = swap1.Add(pawn1, pawn2Pos)
+        
+        {gameState with TokenPositions=swap2}
+       
     result {
         let! availableActions = game |> getAvailableActions
         
@@ -249,6 +268,9 @@ let tryChooseAction action game =
                             match gameState.DrawnCard with
                             | Card.Two -> Ok(Drawing(newGameState))
                             | _ -> Ok(Drawing(newGameState |> updateActivePlayer))
+                        | SwitchPawns(pawn1,pawn2) ->
+                            let newGameState = gameState.GameState |> switchPawns pawn1 pawn2
+                            Ok(Drawing(newGameState |> updateActivePlayer))
                         | PassTurn ->
                         Ok(Drawing(gameState.GameState |> updateActivePlayer))
                         | _ -> Error(game, "Unimplemented")
