@@ -114,7 +114,7 @@ let rec printBoardState game =
     
     let printTokenPosition tokenPosition =
        printfn "Board State:"
-       tokenPosition |> Map.iter (fun (color, id) position -> printfn $"[%A{color}] Token %A{id} is at board position: %A{position}")
+       tokenPosition |> Map.iter (fun (pawn:Pawn) position -> printfn $"[%A{pawn.Color}] Token %A{id} is at board position: %A{position}")
        printfn ""
 
     let rec printActivePlayer activePlayer =

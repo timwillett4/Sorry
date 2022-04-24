@@ -72,7 +72,7 @@ let startGameTests =
                 
                 let countColor color game =
                     game
-                    |> Map.filter (fun (c, _) position -> c = color)
+                    |> Map.filter (fun (pawn:Pawn) position -> pawn.Color = color)
                     |> Map.count 
                 
                 return (tokens |> countColor Color.Red), (tokens |> countColor Color.Yellow)
@@ -90,7 +90,7 @@ let startGameTests =
                 let! game = game |> GameState.tryStartGame (fun () -> 1)
                 let! tokens = game |> GameState.getTokenPositions
                     
-                return tokens |> Map.forall (fun (color, _) position -> position = BoardPosition.Start(color))
+                return tokens |> Map.forall (fun (pawn:Pawn) position -> position = BoardPosition.Start(pawn.Color))
             }
             
             match allPiecesOnHomeSquare with

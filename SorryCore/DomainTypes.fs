@@ -38,9 +38,26 @@ type Pawn = {
     ID : PawnID
 }
 
+let GreenPawn1 = {Color=Color.Green;ID=PawnID.One}
+let GreenPawn2 = {Color=Color.Green;ID=PawnID.Two}
+let GreenPawn3 = {Color=Color.Green;ID=PawnID.Three}
+
+let RedPawn1 = {Color=Color.Red;ID=PawnID.One}
+let RedPawn2 = {Color=Color.Red;ID=PawnID.Two}
+let RedPawn3 = {Color=Color.Red;ID=PawnID.Three}
+
+let YellowPawn1 = {Color=Color.Yellow;ID=PawnID.One}
+let YellowPawn2 = {Color=Color.Yellow;ID=PawnID.Two}
+let YellowPawn3 = {Color=Color.Yellow;ID=PawnID.Three}
+
+let BluePawn1 = {Color=Color.Blue;ID=PawnID.One}
+let BluePawn2 = {Color=Color.Blue;ID=PawnID.Two}
+let BluePawn3 = {Color=Color.Blue;ID=PawnID.Three}
+
 type Action =
     | DrawCard
-    | MovePawn of color:Color*pawnID:PawnID*spaces:int
+    | MovePawn of Pawn*spaces:int
+    | SwitchPawn of pawn1:Pawn*pawn2:Pawn
     | PassTurn // Allowed only when no other actions are legal
 
 let newDeck = [
@@ -171,7 +188,7 @@ type BoardPosition =
     | Home of Color
 
 /// Board state is a map storing where each pawn is on board 
-type BoardState = Map<Color * PawnID, BoardPosition>
+type BoardState = Map<Pawn, BoardPosition>
 
 /// The setup state indicates players are still being added and the game has not yet started
 type SetupState = {

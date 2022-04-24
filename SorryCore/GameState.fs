@@ -52,8 +52,8 @@ let getAvailableActions game =
     let canMoveAnyPiece predicate activeColor boardPositions spaces =
         boardPositions
         |> Map.toList
-        |> List.filter (fun ((color, _), position) -> (color, position) ||> predicate)
-        |> List.map (fun ((color, pawnID), _) -> Action.MovePawn(color, pawnID, spaces))
+        |> List.filter (fun (pawn:Pawn, position) -> (pawn.Color, position) ||> predicate)
+        |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, spaces))
        
     match game with
     | Drawing _ -> Ok([Action.DrawCard])
@@ -136,9 +136,9 @@ let tryStartGame random game =
             let initializeTokenPositions (players:Player list) =
                 players
                 |> List.map (fun player ->
-                    [(player.Color, PawnID.One), BoardPosition.Start(player.Color)
-                     (player.Color, PawnID.Two), BoardPosition.Start(player.Color)
-                     (player.Color, PawnID.Three), BoardPosition.Start(player.Color)])
+                    [{Color=player.Color;ID=PawnID.One}, BoardPosition.Start(player.Color)
+                     {Color=player.Color;ID=PawnID.Two}, BoardPosition.Start(player.Color)
+                     {Color=player.Color;ID=PawnID.Three}, BoardPosition.Start(player.Color)])
                 |> List.reduce (fun colors1 colors2 -> colors1 @ colors2)
                 |> Map.ofList
                 
@@ -170,7 +170,7 @@ let tryChooseAction action game =
        
     // try move pawn or do we assume its legal
     // as we already found available moves???
-    let movePawn color pawnID moveIncrement gameState =
+    let movePawn (pawn:Pawn) moveIncrement gameState =
        
        // @TODO - add to core extensions math
        let wrap max n = (n + max) % max
@@ -201,7 +201,7 @@ let tryChooseAction action game =
            | outer when localPosition >= 1 && localPosition <= 60 ->
                let colorDiff = localPosition / nSpacePerColor
                let outerCoord = localPosition - (colorDiff * nSpacePerColor)
-               let color = ((color |> int) + colorDiff) % nColors |> enum<Color>
+               let color = ((pawn.Color |> int) + colorDiff) % nColors |> enum<Color>
                Outer(color, outerCoord |> enum)
            // This occurs when you are at or near the opening square and move backward
            | outer when localPosition <= 0 && localPosition >= -3 ->
@@ -210,10 +210,10 @@ let tryChooseAction action game =
                Outer(color, nSpacePerColor + localPosition |> enum)
            | safety when localPosition >= 61 && localPosition <= 65 ->
                Safety(localColor, (localPosition - 60) |> enum)
-           | home when localPosition = 66 -> Home(color)
+           | home when localPosition = 66 -> Home(pawn.Color)
            | _ -> failwith $"Invalid board position"
                
-       let currentPosition = gameState.TokenPositions.[color,pawnID]
+       let currentPosition = gameState.TokenPositions.[pawn]
        
        let newPosition =
            match currentPosition with 
@@ -221,12 +221,12 @@ let tryChooseAction action game =
                assert(moveIncrement = 1)
                Outer(color, OuterCoordinate.One)
            | position ->
-               let local = position |> toLocal color
+               let local = position |> toLocal pawn.Color
                let newLocal = local + moveIncrement
-               let newBoardPosition = newLocal |> toBoardPosition color
-               ((position |> toLocal color) + moveIncrement) |> toBoardPosition color
+               let newBoardPosition = newLocal |> toBoardPosition pawn.Color
+               ((position |> toLocal pawn.Color) + moveIncrement) |> toBoardPosition pawn.Color
                
-       let newBoardState = gameState.TokenPositions.Add ((color, pawnID), newPosition)
+       let newBoardState = gameState.TokenPositions.Add (pawn, newPosition)
        
        {gameState with TokenPositions=newBoardState}
        
@@ -244,8 +244,8 @@ let tryChooseAction action game =
                         | _ -> Error(game, "Can only draw card when game is in draw state")
                     | ChoosingAction(gameState) ->
                         match action with
-                        | MovePawn(color,pawnID,moveIncrement) ->
-                            let newGameState = gameState.GameState |> movePawn color pawnID moveIncrement
+                        | MovePawn(pawn,moveIncrement) ->
+                            let newGameState = gameState.GameState |> movePawn pawn moveIncrement
                             match gameState.DrawnCard with
                             | Card.Two -> Ok(Drawing(newGameState))
                             | _ -> Ok(Drawing(newGameState |> updateActivePlayer))
