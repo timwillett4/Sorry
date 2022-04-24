@@ -58,6 +58,7 @@ type Action =
     | DrawCard
     | MovePawn of Pawn*spaces:int
     | SwitchPawns of pawn1:Pawn*pawn2:Pawn
+    | Sorry of pawnOnStart:Pawn*pawnToBump:Pawn
     | PassTurn // Allowed only when no other actions are legal
 
 let newDeck = [

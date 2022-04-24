@@ -81,8 +81,26 @@ let getAvailableActions game =
             
             (activePiecesAbleToSwitch, opponentPieceAbleToSwitch)
             ||> List.allPairs
-            |> List.map (fun (activePawn, opponentPawn) -> Action.SwitchPawns(activePawn, opponentPawn))
+            |> List.map Action.SwitchPawns
 
+        let canMoveAnyPieceOnStartToBumpAnyPieceNotOnStartHomeOrSafety =
+            
+            let activePiecesOnStart = boardPositions
+                                      |> Map.toList
+                                      |> List.filter (fun (pawn, position) -> pawn.Color = activeColor
+                                                                              && position = Start(pawn.Color))
+                                      |> List.map fst
+                                      
+            let opponentPiecesNotOnStartHomeOrSafety = boardPositions
+                                                       |> Map.toList
+                                                       |> List.filter (fun (pawn, position) -> pawn.Color <> activeColor
+                                                                                               && position <> Start(pawn.Color))
+                                                       |> List.map fst
+            
+            (activePiecesOnStart, opponentPiecesNotOnStartHomeOrSafety)
+            ||> List.allPairs
+            |> List.map Action.Sorry
+            
         let actions = match game.DrawnCard with
                       | Card.One ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 1)
                       | Card.Two ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 2)
@@ -93,6 +111,7 @@ let getAvailableActions game =
                       | Card.Ten -> (canMoveAnyPieceNotOnStart 10)@(canMoveAnyPieceNotOnStart -1)
                       | Card.Eleven -> (canMoveAnyPieceNotOnStart 11)@canSwitchPlacesWithOpponentNotOnStartHomeOrSafety
                       | Card.Twelve -> canMoveAnyPieceNotOnStart 12
+                      | Card.Sorry -> canMoveAnyPieceOnStartToBumpAnyPieceNotOnStartHomeOrSafety
                       | _ -> []
                       
         match actions with
@@ -183,7 +202,7 @@ let tryChooseAction action game =
     // as we already found available moves???
     let movePawn (pawn:Pawn) moveIncrement gameState =
        
-       // @TODO - add to core extensions math
+       // @TODO - add to core extension math 
        let wrap max n = (n + max) % max
        let nColors = 4
        let nSpacePerColor = 15
@@ -244,11 +263,21 @@ let tryChooseAction action game =
     let switchPawns pawn1 pawn2 (gameState:DrawState) =
         let pawn1Pos = gameState.TokenPositions.[pawn1]
         let pawn2Pos = gameState.TokenPositions.[pawn2]
-        let swap1 = gameState.TokenPositions.Add(pawn2, pawn1Pos)
-        let swap2 = swap1.Add(pawn1, pawn2Pos)
-        
-        {gameState with TokenPositions=swap2}
+        let newTokenPositions = gameState.TokenPositions
+                                |> Map.add pawn1 pawn2Pos
+                                |> Map.add pawn2 pawn1Pos
+                                
+        {gameState with TokenPositions=newTokenPositions}
        
+    let sorry pawnOnStart pawnToBump (gameState:DrawState) =
+        assert(gameState.TokenPositions.[pawnOnStart] = Start(pawnOnStart.Color))
+        let pawnToBumpPos = gameState.TokenPositions.[pawnToBump]
+        let newTokenPositions = gameState.TokenPositions
+                                |> Map.add pawnOnStart pawnToBumpPos
+                                |> Map.add pawnToBump (Start(pawnToBump.Color))
+        
+        {gameState with TokenPositions=newTokenPositions}
+        
     result {
         let! availableActions = game |> getAvailableActions
         
@@ -268,11 +297,14 @@ let tryChooseAction action game =
                             match gameState.DrawnCard with
                             | Card.Two -> Ok(Drawing(newGameState))
                             | _ -> Ok(Drawing(newGameState |> updateActivePlayer))
+                        // Move 2 Pawns
                         | SwitchPawns(pawn1,pawn2) ->
                             let newGameState = gameState.GameState |> switchPawns pawn1 pawn2
                             Ok(Drawing(newGameState |> updateActivePlayer))
-                        | PassTurn ->
-                        Ok(Drawing(gameState.GameState |> updateActivePlayer))
+                        | Sorry(pawn1, pawn2) ->
+                            let newGameState = gameState.GameState |> sorry pawn1 pawn2
+                            Ok(Drawing(newGameState |> updateActivePlayer))
+                        | PassTurn -> Ok(Drawing(gameState.GameState |> updateActivePlayer))
                         | _ -> Error(game, "Unimplemented")
                     | _ -> Error(game, "Unimplemented")
         else            

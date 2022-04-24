@@ -344,7 +344,7 @@ let getAvailableActionTests =
             testList "11 Basic Movement Tests" [
                 let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Eleven }
                 
-                test $"When ten our is draw player should be able to move any pawn forwards 11 spaces or switch with an opponents piece" {
+                test $"When 11 is drawn, player should be able to move any pawn forwards 11 spaces or switch with an opponents piece" {
                     let availableActions = gameState |> GameState.getAvailableActions
                     let expectedActions = [
                         Action.MovePawn(GreenPawn1, 11)
@@ -397,7 +397,69 @@ let getAvailableActionTests =
                 }
             ]
             
-            // @TODO - Sorry
+            testList "Sorry Basic Movement Tests" [
+                let levi = {Name="Levi"; Color=Color.Green}
+                let dad = {Name="Dad"; Color=Color.Blue}
+                
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Start(Color.Green)
+                           GreenPawn2, BoardPosition.Start(Color.Green)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                           BluePawn2, BoardPosition.Outer(Color.Blue, OuterCoordinate.Two)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                    }
+                
+                let gameState = ChoosingAction{GameState = boardState; DrawnCard = Card.Sorry }
+                
+                test $"When Sorry is drawn, the active player should be able to move any piece out of start to a square occupied by an opponent pawn and send that pawn back to start" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    let expectedActions = [
+                        Action.Sorry(GreenPawn1, BluePawn1)
+                        Action.Sorry(GreenPawn2, BluePawn2)
+                        Action.Sorry(GreenPawn2, BluePawn1)
+                        Action.Sorry(GreenPawn2, BluePawn2)
+                        ]
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece on start to bump opponents pawn on outer square"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.Sorry(GreenPawn1, BluePawn1))
+                
+                test $"Expect green pawn 1 to move to square where blue pawn 1 was" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Blue, OuterCoordinate.One))
+                            "Expected green pawn1 to move to square where blue pawn 2 was"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect blue pawn 1 to move back to start" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
+                            "Expected blue pawn 1 to go back to start"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect turn to move to next player" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
         ]
         
         // @TODO - test for landing on opponent piece
