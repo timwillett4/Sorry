@@ -181,11 +181,11 @@ let getAvailableActionTests =
                        RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
-                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
-                           GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
-                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
+                           GreenPawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.Two)
+                           GreenPawn3, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Two)
                            
-                           BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                           BluePawn1, BoardPosition.Start(Color.Blue)
                            BluePawn2, BoardPosition.Start(Color.Blue)
                            BluePawn3, BoardPosition.Start(Color.Blue)
                        ] |> Map.ofList
@@ -222,11 +222,11 @@ let getAvailableActionTests =
                         | _ -> failtest "Expected game to transition to draw state" 
                 ])        
               
-            basicMovementCardsTests Card.One 1 (Outer(Color.Green, OuterCoordinate.Two)) |> testList "One Basic Movement Tests"
-            basicMovementCardsTests Card.Three 3 (Outer(Color.Green, OuterCoordinate.Four)) |> testList "Three Basic Movement Tests"
-            basicMovementCardsTests Card.Five 5 (Outer(Color.Green, OuterCoordinate.Six)) |> testList "Five Basic Movement Tests"
-            basicMovementCardsTests Card.Eight 8 (Outer(Color.Green, OuterCoordinate.Nine)) |> testList "Eight Basic Movement Tests"
-            basicMovementCardsTests Card.Twelve 12 (Outer(Color.Green, OuterCoordinate.Thirteen)) |> testList "Twelve Basic Movement Tests"
+            basicMovementCardsTests Card.One 1 (Outer(Color.Green, OuterCoordinate.Three)) |> testList "One Basic Movement Tests"
+            basicMovementCardsTests Card.Three 3 (Outer(Color.Green, OuterCoordinate.Five)) |> testList "Three Basic Movement Tests"
+            basicMovementCardsTests Card.Five 5 (Outer(Color.Green, OuterCoordinate.Seven)) |> testList "Five Basic Movement Tests"
+            basicMovementCardsTests Card.Eight 8 (Outer(Color.Green, OuterCoordinate.Ten)) |> testList "Eight Basic Movement Tests"
+            basicMovementCardsTests Card.Twelve 12 (Outer(Color.Green, OuterCoordinate.Fourteen)) |> testList "Twelve Basic Movement Tests"
             
             testList "Card 2 choose action tests" [
                 

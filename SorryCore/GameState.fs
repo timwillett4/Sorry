@@ -284,19 +284,30 @@ let tryChooseAction action game =
        let currentPosition = gameState.TokenPositions.[pawnToMove]
        
        let newPosition = currentPosition |> positionAheadOfCurrentBy moveIncrement pawnToMove.Color
-       
+                         
        let sendOpponentBackToStartIfYouLandOnHim tokenPositions =
            let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ position -> position = newPosition)
                                 
            match opponentToBump with
            | Some(pawn) -> gameState.TokenPositions.Add(pawn, Start(pawn.Color))
            | None -> gameState.TokenPositions
-       
+           
+       let slideIfPawnLandsOnSlideSquare boardPosition =
+          match newPosition with
+          | Outer(color, OuterCoordinate.Six) -> boardPosition
+                                                 |> Map.add pawnToMove (Outer(color, OuterCoordinate.Ten))
+                                                 // @TODO bump any pawn on slide regionStartOurterRedBlueYellowTwo.
+          | _ -> boardPosition
+          
        let newBoardState =
            gameState.TokenPositions
            |> sendOpponentBackToStartIfYouLandOnHim
            |> Map.add pawnToMove newPosition
+           |> slideIfPawnLandsOnSlideSquare
+           
         
+       // @TODO - implement slide rules here
+       
        {gameState with TokenPositions=newBoardState}
        
     let switchPawns pawn1 pawn2 (gameState:BoardState) =
