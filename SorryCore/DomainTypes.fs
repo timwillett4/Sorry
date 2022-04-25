@@ -1,8 +1,6 @@
 ﻿[<AutoOpen>]
 module Sorry.Core.DomainTypes
 
-open Sorry.Core
-
 /// The color enum represent the four possible colors players can choose from
 type Color =
     | Green = 0
@@ -10,8 +8,6 @@ type Color =
     | Blue = 2
     | Yellow = 3
 
-/// Card type is a discriminant union representing the 12 different types of cards 
-// @TODO - add descriptions (and how many of each type there should be?)
 type Card =
     | One
     | Two
@@ -59,7 +55,7 @@ type Action =
     | MovePawn of Pawn*spaces:int
     | SwitchPawns of pawn1:Pawn*pawn2:Pawn
     | Sorry of pawnOnStart:Pawn*pawnToBump:Pawn
-    | PassTurn // Allowed only when no other actions are legal
+    | PassTurn 
 
 let newDeck = [
     // 5 ones, 4 of every other card
@@ -189,7 +185,7 @@ type BoardPosition =
     | Home of Color
 
 /// Board state is a map storing where each pawn is on board 
-type BoardState = Map<Pawn, BoardPosition>
+type TokenPositions = Map<Pawn, BoardPosition>
 
 /// The setup state indicates players are still being added and the game has not yet started
 type SetupState = {
@@ -197,18 +193,18 @@ type SetupState = {
 }
 
 /// The DrawState is when a player is currently up to draw a card
-type DrawState = {
+type BoardState = {
     Deck : Deck
     RandomNumberGenerator : unit -> int
     Players : Player list
-    TokenPositions : BoardState
+    TokenPositions : TokenPositions
     ActivePlayer : Player
 }
 
-/// The ChooseActionState is when a player has just drawn a card and not much choose what action to take
+/// The ChooseActionState is when a player has just drawn a card and now much choose what action to take
 /// (For example which token to move, or what move to make for cards that have options such as 7 or 10)
 type ChooseActionState = {
-    GameState : DrawState
+    BoardState : BoardState
     DrawnCard : Card
 }
 
@@ -220,6 +216,6 @@ type GameOverState = {
 /// GameState is a discriminate union storing the current state of the game
 type GameState = 
    | SettingUp of SetupState 
-   | Drawing of DrawState
+   | Drawing of BoardState
    | ChoosingAction of ChooseActionState
    | GameOver of GameOverState

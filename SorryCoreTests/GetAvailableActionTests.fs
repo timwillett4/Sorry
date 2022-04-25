@@ -6,12 +6,11 @@ open Expecto
 [<Tests>]
 let getAvailableActionTests =
     
-    // @TODO - generalize test into property based tests?
-    testList "Get Available Action Tests" [
+    testList "Choose action tests" [
         let levi = {Name="Levi"; Color=Color.Green}
         let dad = {Name="Dad"; Color=Color.Blue}
         
-        let initialGameState = {
+        let initialBoardState = {
                Deck = newDeck
                RandomNumberGenerator = fun () -> 0
                Players = [levi;dad]
@@ -27,11 +26,11 @@ let getAvailableActionTests =
                ActivePlayer = levi
             }
 
-        testList "Initial State Tests" [
+        testList "Initial state tests" [
             
-            let gameState = Drawing(initialGameState)
+            let gameState = Drawing(initialBoardState)
             
-            test "Initial actions for a newly created game should be {DrawCard}" {
+            test "Initial actions for a newly created game should be [DrawCard]" {
                 
                 let availableActions = gameState |> GameState.getAvailableActions
                 
@@ -53,7 +52,7 @@ let getAvailableActionTests =
         ]
         
         let canMoveFromStart card =
-            let initialGameState = ChoosingAction{GameState = initialGameState; DrawnCard = card }
+            let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = card }
             Seq.toList (testParam initialGameState [
                 $"When a %A{card} card is drawn, you should be allowed to move any piece from the start square",
                 fun initialGameState () ->
@@ -92,10 +91,10 @@ let getAvailableActionTests =
             ]
         )
             
-        [Card.One; Card.Two]|> List.collect canMoveFromStart |> testList "Can only move from start with one or two tests"
+        [Card.One; Card.Two]|> List.collect canMoveFromStart |> testList "Can only move from start with one or two"
         
         test "When one is drawn moving from start should change active player" {
-            let initialGameState = ChoosingAction{GameState = initialGameState; DrawnCard = Card.One }
+            let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = Card.One }
             let newGameState = initialGameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
             match newGameState with
             | Ok(Drawing(gameState)) ->Expect.equal gameState.ActivePlayer dad "Expected turn to move to next player"
@@ -103,7 +102,7 @@ let getAvailableActionTests =
         }
         
         test "When two is drawn moving from start should not change active player (player gets to draw again)" {
-            let initialGameState = ChoosingAction{GameState = initialGameState; DrawnCard = Card.Two }
+            let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = Card.Two }
             let newGameState = initialGameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
             match newGameState with
             | Ok(Drawing(gameState)) ->Expect.equal gameState.ActivePlayer levi "Expected active player to get another turn"
@@ -111,7 +110,7 @@ let getAvailableActionTests =
         }
         
         let canNotMoveFromStart card =
-            let initialGameState = ChoosingAction{GameState = initialGameState; DrawnCard = card }
+            let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = card }
             Seq.toList (testParam initialGameState [
                 $"When all pieces are in home squares and a %A{card} is drawn, the player should only be able to pass turn",
                  fun initialGameState () ->
@@ -135,7 +134,7 @@ let getAvailableActionTests =
                         let newGameState = initialGameState |> GameState.tryChooseAction Action.PassTurn
                         match (newGameState,initialGameState) with
                         | Ok(Drawing(newGameState)),ChoosingAction(initialGameState) ->
-                            Expect.equal initialGameState.GameState.TokenPositions newGameState.TokenPositions "Expected token positions to not change"
+                            Expect.equal initialGameState.BoardState.TokenPositions newGameState.TokenPositions "Expected token positions to not change"
                         | _ -> failtest "Expected game to transition to drawState"
                         
                  $"When all pieces are in home squares and a %A{card} is drawn, moving a pawn should be an invalid move",
@@ -156,31 +155,33 @@ let getAvailableActionTests =
          Card.Sorry]
         |> List.collect canNotMoveFromStart |> testList "Can not move from start with any card other than one or two test"
         
-        testList "Basic Movement Tests" [
+        testList "Move token tests" [
             let levi = {Name="Levi"; Color=Color.Green}
             let dad = {Name="Dad"; Color=Color.Blue}
             
-            let gameState = {
-                   Deck = newDeck
-                   RandomNumberGenerator = fun () -> 0
-                   Players = [levi;dad]
-                   TokenPositions = [
-                       GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
-                       GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
-                       GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
-                       
-                       BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
-                       BluePawn2, BoardPosition.Start(Color.Blue)
-                       BluePawn3, BoardPosition.Start(Color.Blue)
-                   ] |> Map.ofList
-                   ActivePlayer = levi
-                }
-            
             // tests for cards that you just move the number of squares it shows on card
             let basicMovementCardsTests (card:Card) (expectedMove:int) (expectedMoveSquare:BoardPosition) =
-                let gameState = ChoosingAction{GameState = gameState; DrawnCard = card }
+                
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                           GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = card }
+                
                 Seq.toList (testParam gameState [
-                    $"When %A{card} is draw player should be able to move pawn %A{card} space",
+                    $"When %A{card} is drawn, active player should be able to move pawn %A{card} space",
                      fun gameState () ->
                         let availableActions = gameState |> GameState.getAvailableActions
                         let expectedActions = [
@@ -191,7 +192,7 @@ let getAvailableActionTests =
                         match availableActions with
                         | Ok(actions) -> Expect.containsAll actions expectedActions $"Expected to be able to move any piece by %A{card}"
                         | Error _ -> failtest "Unexpected Error"
-                    $"Expect Token Positions to be updated when moving by %A{card}",
+                    $"Expect token position to be updated when moving by %A{card}",
                     fun gameState () ->
                         let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
                         match newGameState with
@@ -213,11 +214,27 @@ let getAvailableActionTests =
             basicMovementCardsTests Card.Eight 8 (Outer(Color.Green, OuterCoordinate.Nine)) |> testList "Eight Basic Movement Tests"
             basicMovementCardsTests Card.Twelve 12 (Outer(Color.Green, OuterCoordinate.Thirteen)) |> testList "Twelve Basic Movement Tests"
             
-            // Two allow you to go again
-            testList "Two Basic Movement Tests" [
-                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Two }
+            testList "Card 2 choose action tests" [
                 
-                test $"When two is draw player should be able to move any pawn two space" {
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                           GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Two }
+                
+                test $"When a two card is drawn, the active player should be able to move any pawn not on start two space" {
                     let availableActions = gameState |> GameState.getAvailableActions
                     let expectedActions = [
                         Action.MovePawn(GreenPawn1, 2)
@@ -231,14 +248,14 @@ let getAvailableActionTests =
                 
                 let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 2))
                 
-                test $"Expect Token Positions to be updated when moving by 2" {
+                test $"Expect token positions to be updated when moving by 2" {
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Three)) "Expected pawn 1 to be moved 2 space to green 3"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                test $"Expect active player to draw again" {
+                test $"Expect active player to draw again when 2 is drawn" {
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
                         Expect.equal gameState.ActivePlayer levi "Expected active player to draw again"
@@ -246,10 +263,27 @@ let getAvailableActionTests =
                 }
             ]
             
-            testList "Four Basic Movement Tests" [
-                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Four }
+            testList "Card 4 movement tests" [
                 
-                test $"When four is draw player should be able to move any pawn backwards four spaces" {
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                           GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Four }
+                
+                test $"When a four card is drawn, the active player should be able to move any pawn backwards four spaces" {
                     let availableActions = gameState |> GameState.getAvailableActions
                     let expectedActions = [
                         Action.MovePawn(GreenPawn1, -4)
@@ -263,7 +297,7 @@ let getAvailableActionTests =
                 
                 let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn2, -4))
                 
-                test $"Expect Token Positions to be updated when moving backwards 4" {
+                test $"Expect token position to be updated when moving backwards 4" {
                     
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
@@ -293,10 +327,27 @@ let getAvailableActionTests =
             
             // @TODO - 7
             
-            testList "10 Basic Movement Tests" [
-                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Ten }
+            testList "Card 10 movement Tests" [
                 
-                test $"When ten our is draw player should be able to move any pawn forwards 10 spaces or back 1 space" {
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                           GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Ten }
+                
+                test $"When a ten card is drawn, the active player should be able to move any pawn forwards 10 spaces or back 1 space" {
                     let availableActions = gameState |> GameState.getAvailableActions
                     let expectedActions = [
                         Action.MovePawn(GreenPawn1, 10)
@@ -313,7 +364,7 @@ let getAvailableActionTests =
                 
                 let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn2, 10))
                 
-                test $"Expect Token Positions to be updated when moving forwards 10" {
+                test $"Expect token position to be updated when moving forwards 10" {
                     
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
@@ -341,10 +392,27 @@ let getAvailableActionTests =
                 }
             ]
             
-            testList "11 Basic Movement Tests" [
-                let gameState = ChoosingAction{GameState = gameState; DrawnCard = Card.Eleven }
+            testList "Card 11 movement tests" [
                 
-                test $"When 11 is drawn, player should be able to move any pawn forwards 11 spaces or switch with an opponents piece" {
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                           GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eleven }
+                
+                test $"When an 11 is drawn, the active player should be able to move any pawn forwards 11 spaces or switch with an opponents piece" {
                     let availableActions = gameState |> GameState.getAvailableActions
                     let expectedActions = [
                         Action.MovePawn(GreenPawn1, 11)
@@ -361,7 +429,7 @@ let getAvailableActionTests =
                 
                 let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 11))
                 
-                test $"Expect Token Positions to be updated when moving forwards 11" {
+                test $"Expect token position to be updated when moving forwards 11" {
                     
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
@@ -395,9 +463,15 @@ let getAvailableActionTests =
                             "Expected green pawn 1 to move to position where blue pawn 1 was"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
+                
+    
+                // @TODO - 11 Special Rules:
+                // @TODO -     Allowed to pass instead of use switch if you can't move 11
+                // @TODO -     If you switch with a player on boost square you get to boost
+                // @TODO -     Can't switch with a pawn on start/home/or safety
             ]
             
-            testList "Sorry Basic Movement Tests" [
+            testList "Card 'Sorry' movement tests" [
                 let levi = {Name="Levi"; Color=Color.Green}
                 let dad = {Name="Dad"; Color=Color.Blue}
                 
@@ -417,9 +491,9 @@ let getAvailableActionTests =
                        ActivePlayer = levi
                     }
                 
-                let gameState = ChoosingAction{GameState = boardState; DrawnCard = Card.Sorry }
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Sorry }
                 
-                test $"When Sorry is drawn, the active player should be able to move any piece out of start to a square occupied by an opponent pawn and send that pawn back to start" {
+                test $"When Sorry card is drawn, the active player should be able to move any piece out of start to a square occupied by an opponent pawn and send that pawn back to start" {
                     let availableActions = gameState |> GameState.getAvailableActions
                     let expectedActions = [
                         Action.Sorry(GreenPawn1, BluePawn1)
@@ -468,9 +542,4 @@ let getAvailableActionTests =
         // @TODO - test for can't move
         // @TODO - test for getting home
         // @TODO - test for backwards from safety
-    
-        // @TODO - 11 Special Rules:
-        // @TODO - Allowed to pass instead of use switch if you can't move 11
-        // @TODO - If you switch with a player on boost square you get to boost
-        // @TODO - Can't switch with a pawn on start/home/or safety
     ]

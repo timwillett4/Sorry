@@ -52,8 +52,8 @@ let getAvailableActions game =
     match game with
     | Drawing _ -> Ok([Action.DrawCard])
     | ChoosingAction(game) ->
-        let activeColor = game.GameState.ActivePlayer.Color
-        let boardPositions = game.GameState.TokenPositions
+        let activeColor = game.BoardState.ActivePlayer.Color
+        let boardPositions = game.BoardState.TokenPositions
        
         let canMoveAnyPiece predicate spaces =
             boardPositions
@@ -187,7 +187,7 @@ let tryDrawCard game =
         let topCut, bottomCut = gameState.Deck |> List.splitAt drawIndex
         let drawnCard = bottomCut.Head
         let newDeck = topCut @ bottomCut.Tail
-        Ok(ChoosingAction({GameState={gameState with Deck=newDeck};DrawnCard=drawnCard}))
+        Ok(ChoosingAction({BoardState={gameState with Deck=newDeck};DrawnCard=drawnCard}))
     | _ -> Error(game, "Can only draw a card when game is in draw state")
 
 let tryChooseAction action game =
@@ -260,7 +260,7 @@ let tryChooseAction action game =
        
        {gameState with TokenPositions=newBoardState}
        
-    let switchPawns pawn1 pawn2 (gameState:DrawState) =
+    let switchPawns pawn1 pawn2 (gameState:BoardState) =
         let pawn1Pos = gameState.TokenPositions.[pawn1]
         let pawn2Pos = gameState.TokenPositions.[pawn2]
         let newTokenPositions = gameState.TokenPositions
@@ -269,7 +269,7 @@ let tryChooseAction action game =
                                 
         {gameState with TokenPositions=newTokenPositions}
        
-    let sorry pawnOnStart pawnToBump (gameState:DrawState) =
+    let sorry pawnOnStart pawnToBump (gameState:BoardState) =
         assert(gameState.TokenPositions.[pawnOnStart] = Start(pawnOnStart.Color))
         let pawnToBumpPos = gameState.TokenPositions.[pawnToBump]
         let newTokenPositions = gameState.TokenPositions
@@ -293,18 +293,18 @@ let tryChooseAction action game =
                     | ChoosingAction(gameState) ->
                         match action with
                         | MovePawn(pawn,moveIncrement) ->
-                            let newGameState = gameState.GameState |> movePawn pawn moveIncrement
+                            let newGameState = gameState.BoardState |> movePawn pawn moveIncrement
                             match gameState.DrawnCard with
                             | Card.Two -> Ok(Drawing(newGameState))
                             | _ -> Ok(Drawing(newGameState |> updateActivePlayer))
                         // Move 2 Pawns
                         | SwitchPawns(pawn1,pawn2) ->
-                            let newGameState = gameState.GameState |> switchPawns pawn1 pawn2
+                            let newGameState = gameState.BoardState |> switchPawns pawn1 pawn2
                             Ok(Drawing(newGameState |> updateActivePlayer))
                         | Sorry(pawn1, pawn2) ->
-                            let newGameState = gameState.GameState |> sorry pawn1 pawn2
+                            let newGameState = gameState.BoardState |> sorry pawn1 pawn2
                             Ok(Drawing(newGameState |> updateActivePlayer))
-                        | PassTurn -> Ok(Drawing(gameState.GameState |> updateActivePlayer))
+                        | PassTurn -> Ok(Drawing(gameState.BoardState |> updateActivePlayer))
                         | _ -> Error(game, "Unimplemented")
                     | _ -> Error(game, "Unimplemented")
         else            
