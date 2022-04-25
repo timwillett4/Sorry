@@ -747,11 +747,11 @@ let getAvailableActionTests =
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Five)
-                           GreenPawn2, BoardPosition.Start(Color.Green)
+                           GreenPawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.Twelve)
                            GreenPawn3, BoardPosition.Start(Color.Green)
                            
                            BluePawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Seven)
-                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.Fourteen)
                            BluePawn3, BoardPosition.Start(Color.Blue)
                        ] |> Map.ofList
                        ActivePlayer = levi
@@ -769,7 +769,7 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                test $"When another piece is on the slide square it should get bumped back to start" {
+                test $"When another piece is in the slide region it should get bumped back to start" {
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
@@ -777,7 +777,15 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                // @TODO slide 3 on square 13
+                let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn2, 1))
+                
+                test $"When you land on a slide triangle on square 13, you piece should move an additional 3 spacs to the end of the slide region" {
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Blue, OuterCoordinate.One))
+                            "Expected green pawn 2 to move to the end of the slide region at outer sqaure blue 1"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
                 
                 // @TODO - do not slide when you land on your own slide square 
                 

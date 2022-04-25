@@ -23,10 +23,14 @@ let private getChosenColors (game:SetupState) = game.Players |> List.map (fun pl
 /// Converts board position to 1 first square out of start to 65(home) representing
 /// local coordinates for a particular color
 
-let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
-    let nColors = 4
-    let nSpacePerColor = 15
+let wrap max n = (n + max) % max
+let nColors = 4
+let incrementColor increment color =
     let wrap max n = (n + max) % max
+    (color |> int) + increment |> wrap nColors |> enum
+    
+let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
+    let nSpacePerColor = 15
     
     let toLocal boardPosition =
        match boardPosition with
@@ -296,7 +300,10 @@ let tryChooseAction action game =
           match newPosition with
           | Outer(color, OuterCoordinate.Six) -> boardPosition
                                                  |> Map.add pawnToMove (Outer(color, OuterCoordinate.Ten))
-                                                 // @TODO bump any pawn on slide regionStartOurterRedBlueYellowTwo.
+                                                 // @TODO bump any pawn on slide region
+          | Outer(color, OuterCoordinate.Thirteen) -> boardPosition
+                                                      |> Map.add pawnToMove (Outer(color |> incrementColor 1, OuterCoordinate.One))
+                                                      // @TODO bump any pawn on slide region
           | _ -> boardPosition
           
        let newBoardState =
@@ -304,9 +311,6 @@ let tryChooseAction action game =
            |> sendOpponentBackToStartIfYouLandOnHim
            |> Map.add pawnToMove newPosition
            |> slideIfPawnLandsOnSlideSquare
-           
-        
-       // @TODO - implement slide rules here
        
        {gameState with TokenPositions=newBoardState}
        
