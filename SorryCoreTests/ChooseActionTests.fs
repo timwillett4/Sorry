@@ -204,7 +204,7 @@ let getAvailableActionTests =
                             Action.MovePawn(GreenPawn3, expectedMove)
                             ]
                         match availableActions with
-                        | Ok(actions) -> Expect.containsAll actions expectedActions $"Expected to be able to move any piece by %A{card}"
+                        | Ok(actions) -> Expect.equal actions expectedActions $"Expected to be able to move any piece by %A{card}"
                         | Error _ -> failtest "Unexpected Error"
                     $"Expect token position to be updated when moving by %A{card}",
                     fun gameState () ->
@@ -256,7 +256,7 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn3, 2)
                         ]
                     match availableActions with
-                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece by 2"
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece by 2"
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
@@ -305,7 +305,7 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn3, -4)
                         ]
                     match availableActions with
-                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece backwards 4"
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece backwards 4"
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
@@ -372,7 +372,7 @@ let getAvailableActionTests =
                         Action.SplitMove7((GreenPawn1, 6), (GreenPawn2, 1))
                     ]
                     match availableActions with
-                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece backwards 4"
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece backwards 4"
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
@@ -445,7 +445,7 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn3, -1)
                         ]
                     match availableActions with
-                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece forwards 10 or backwards 1"
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece forwards 10 or backwards 1"
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
@@ -612,14 +612,16 @@ let getAvailableActionTests =
                 
                 test $"When Sorry card is drawn, the active player should be able to move any piece out of start to a square occupied by an opponent pawn and send that pawn back to start" {
                     let availableActions = gameState |> GameState.getAvailableActions
+
                     let expectedActions = [
                         Action.Sorry(GreenPawn1, BluePawn1)
-                        Action.Sorry(GreenPawn2, BluePawn2)
+                        Action.Sorry(GreenPawn1, BluePawn2)
                         Action.Sorry(GreenPawn2, BluePawn1)
                         Action.Sorry(GreenPawn2, BluePawn2)
-                        ]
+                    ]
+
                     match availableActions with
-                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece on start to bump opponents pawn on outer square"
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece on start to bump opponents pawn on outer square"
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
@@ -675,7 +677,7 @@ let getAvailableActionTests =
                     let expectedActions = [Action.PassTurn]
                     
                     match availableActions with
-                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected only move to be pass turn"
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected only move to be pass turn"
                     | Error _ -> failtest "Unexpected Error" 
                 }
             ]
