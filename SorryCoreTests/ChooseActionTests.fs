@@ -739,10 +739,48 @@ let getAvailableActionTests =
                 | Error _ -> failtest "Unexpected Error" 
             }
             
-        // @TODO - test for landing on boost squares
-        // @TODO - test for can't move
-        // @TODO - test for getting home
-        // @TODO - test for backwards from safety
-        // @TODO - test for game over
+            testList "Slide square tests" [
+                
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Five)
+                           GreenPawn2, BoardPosition.Start(Color.Green)
+                           GreenPawn3, BoardPosition.Start(Color.Green)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Six)
+                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                    }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn1, 1))
+                
+                test $"When you land on a slide triangle on square 6, you piece should move an additional 4 spacs to the end of the slide region" {
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Red, OuterCoordinate.Ten))
+                            "Expected green pawn 1 to move to the end of the slide region at outer sqaure red 10"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                // @TODO blue piece shoud get bumped
+                
+                // @TODO slide 3 on square 13
+                
+                // @TODO - do not slide when you land on your own slide square 
+                
+                // @TODO - your own piece also gets bumped if it is in slide region
+            ]
+            
+            // @TODO - test for can't move
+            // @TODO - test for getting home
+            // @TODO - test for backwards from safety
+            // @TODO - test for game over
         ]
     ]
