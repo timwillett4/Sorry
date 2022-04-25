@@ -298,12 +298,22 @@ let tryChooseAction action game =
            
        let slideIfPawnLandsOnSlideSquare boardPosition =
           match newPosition with
-          | Outer(color, OuterCoordinate.Six) -> boardPosition
-                                                 |> Map.add pawnToMove (Outer(color, OuterCoordinate.Ten))
-                                                 // @TODO bump any pawn on slide region
-          | Outer(color, OuterCoordinate.Thirteen) -> boardPosition
-                                                      |> Map.add pawnToMove (Outer(color |> incrementColor 1, OuterCoordinate.One))
-                                                      // @TODO bump any pawn on slide regioGreenGreenYellowkjkYou should not slide when you land on your own slide ou should not slide when you land on your own slide 3 4 Green, terCoordinate.Expected pawn to not slide and just move forward 1 SevenBluePawn2BluePawn2BlueYellowFourteen// @TODO - blue pawns should not be // your "own slide square is  3 quare is on the previous colors outer 13 pawn to not slide and just move forward one square to yell oe n
+          | Outer(color, OuterCoordinate.Six) ->
+              if color <> pawnToMove.Color then
+                 boardPosition
+                 |> Map.add pawnToMove (Outer(color, OuterCoordinate.Ten))
+                 // @TODO bump any pawn on slide region
+              else
+                 boardPosition 
+          | Outer(color, OuterCoordinate.Thirteen) ->
+              // your own slide 3 is actually behind starting square so in previous color outer regin
+              let ownSlideColor = pawnToMove.Color |> incrementColor -1
+              if color <> ownSlideColor then
+                 boardPosition
+                 |> Map.add pawnToMove (Outer(color |> incrementColor 1, OuterCoordinate.One))
+                 // @TODO bump any pawn on slide region
+              else
+                 boardPosition 
           | _ -> boardPosition
           
        let newBoardState =
