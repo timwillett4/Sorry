@@ -487,6 +487,7 @@ let getAvailableActionTests =
                 
                 test $"When an 11 is drawn, the active player should be able to move any pawn forwards 11 spaces or switch with an opponents piece" {
                     let availableActions = gameState |> GameState.getAvailableActions
+                    
                     let expectedActions = [
                         Action.MovePawn(GreenPawn1, 11)
                         Action.MovePawn(GreenPawn2, 11)
@@ -537,11 +538,42 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                           GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           
+                           BluePawn1, BoardPosition.Start(Color.Blue)
+                           BluePawn2, BoardPosition.Home(Color.Blue)
+                           BluePawn3, BoardPosition.Safety(Color.Blue, SafetySquare.One)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eleven }
     
+                test $"Can not switch with piece on start, home, or safety square" {
+                
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    
+                    let expectedActions = [
+                        Action.MovePawn(GreenPawn1, 11)
+                        Action.MovePawn(GreenPawn2, 11)
+                        Action.MovePawn(GreenPawn3, 11)
+                    ]
+                    
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move all pieces 11 but not swtich with a"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
                 // @TODO - 11 Special Rules:
                 // @TODO -     Allowed to pass instead of use switch if you can't move 11
+                
                 // @TODO -     If you switch with a player on boost square you get to boost
-                // @TODO -     Can't switch with a pawn on start/home/or safety
             ]
             
             testList "Card 'Sorry' movement tests" [

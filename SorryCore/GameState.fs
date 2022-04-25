@@ -78,7 +78,7 @@ let getAvailableActions game =
             let ableToSwitch boardPositions =
                 boardPositions
                 |> Map.toList
-                |> List.filter (fun (pawn:Pawn, position) -> position <> Start(pawn.Color))
+                |> List.filter (fun (_Pawn, position) -> position |> isOuterSquare)
                 |> List.map fst
                 
             let activePiecesAbleToSwitch = activePieces |> ableToSwitch
