@@ -132,7 +132,6 @@ let getAvailableActions game =
                       | Card.Eleven -> (canMoveAnyPieceNotOnStart 11)@canSwitchPlacesWithOpponentNotOnStartHomeOrSafety
                       | Card.Twelve -> canMoveAnyPieceNotOnStart 12
                       | Card.Sorry -> canMoveAnyPieceOnStartToBumpAnyPieceNotOnStartHomeOrSafety
-                      | _ -> []
                       
         match actions with
         | [] -> Ok([Action.PassTurn])
