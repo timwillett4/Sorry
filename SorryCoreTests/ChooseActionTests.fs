@@ -738,10 +738,11 @@ let getAvailableActionTests =
                 | Ok(actions) -> Expect.equal actions expectedActions "Expected to only be able to move pawn 2 1 space"
                 | Error _ -> failtest "Unexpected Error" 
             }
+            
         // @TODO - test for landing on boost squares
-        // @TODO - test for can't land on your own piece
         // @TODO - test for can't move
         // @TODO - test for getting home
         // @TODO - test for backwards from safety
+        // @TODO - test for game over
         ]
     ]
