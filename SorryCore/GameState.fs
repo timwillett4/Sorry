@@ -55,6 +55,11 @@ let getAvailableActions game =
         let activeColor = game.BoardState.ActivePlayer.Color
         let boardPositions = game.BoardState.TokenPositions
        
+        let isOuterSquare position =
+            match position with
+            | Outer _ -> true
+            | _ -> false
+        
         let canMoveAnyPiece predicate spaces =
             boardPositions
             |> Map.toList
@@ -93,8 +98,7 @@ let getAvailableActions game =
                                       
             let opponentPiecesNotOnStartHomeOrSafety = boardPositions
                                                        |> Map.toList
-                                                       |> List.filter (fun (pawn, position) -> pawn.Color <> activeColor
-                                                                                               && position <> Start(pawn.Color))
+                                                       |> List.filter (fun (pawn, position) -> pawn.Color <> activeColor && position |> isOuterSquare)
                                                        |> List.map fst
             
             (activePiecesOnStart, opponentPiecesNotOnStartHomeOrSafety)

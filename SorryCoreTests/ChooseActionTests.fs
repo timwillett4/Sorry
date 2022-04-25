@@ -607,7 +607,33 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                // @TODO - test for can't bump piece on safety or home
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Start(Color.Green)
+                           GreenPawn2, BoardPosition.Start(Color.Green)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           
+                           BluePawn1, BoardPosition.Home(Color.Blue)
+                           BluePawn2, BoardPosition.Safety(Color.Blue, SafetySquare.Two)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                    }
+                    
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Sorry }
+                
+                test $"Can not bump piece on start, home or safety" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    
+                    let expectedActions = [Action.PassTurn]
+                    
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected only move to be pass turn"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
             ]
         ]
         
