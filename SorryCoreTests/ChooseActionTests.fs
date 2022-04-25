@@ -1,4 +1,4 @@
-﻿module SorryCoreTests.GetAvailableActions
+﻿module SorryCoreTests.MoveActionsTests
 
 open Sorry.Core
 open Expecto
