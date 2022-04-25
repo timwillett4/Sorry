@@ -4,17 +4,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="Scripts\CoreTests.fsx" />
-    <None Include="Scripts\Scratchpad.fsx" />
-    <None Include="Scripts\CardDeck.fsx" />
-    <None Include="Scripts\BoardPosition.fsx" />
-    <None Include="Scripts\GameBoard.fsx" />
-    <None Include="Scripts\Rules.fsx" />
-    <None Include="Scripts\Api.fsx" />
     <Compile Include="ConstrainedTypes.fs" />
     <Compile Include="DomainTypes.fs" />
-    <Compile Include="CardDeck.fs" />
-    <Compile Include="BoardPosition.fs" />
     <Compile Include="GameState.fs" />
   </ItemGroup>
   <ItemGroup>
