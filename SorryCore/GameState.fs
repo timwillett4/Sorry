@@ -109,7 +109,7 @@ let getAvailableActions game =
             | _ -> false
         
         let canMoveAnyPiece predicate moveIncrement =
-            let ownPieceIsNotOnMoveToSquare (pawn:Pawn, position) =
+            let ownPawnIsNotOnMoveToSquare (pawn:Pawn, position) =
                let newPosition = position |> positionAheadOfCurrentBy moveIncrement pawn.Color
                let pieceOnMoveToSquare = boardPositions |> Map.tryFindKey (fun pawn position -> pawn.Color = activeColor && position = newPosition)
                match pieceOnMoveToSquare with
@@ -119,7 +119,7 @@ let getAvailableActions game =
             boardPositions
             |> Map.toList
             |> List.filter (fun (pawn, position) -> pawn.Color = activeColor && position |> predicate)
-            |> List.filter ownPieceIsNotOnMoveToSquare 
+            |> List.filter ownPawnIsNotOnMoveToSquare 
             |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, moveIncrement))
             
         let canMoveAnyPieceOutOfStart = canMoveAnyPiece (fun position -> position = Start(activeColor)) 1
