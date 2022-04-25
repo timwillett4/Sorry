@@ -325,7 +325,80 @@ let getAvailableActionTests =
                 }
             ]
             
-            // @TODO - 7
+            testList "Card 7 movement tests" [
+                
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                           GreenPawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
+                           GreenPawn3, BoardPosition.Start(Color.Green)
+                           
+                           BluePawn1, BoardPosition.Start(Color.Blue)
+                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Seven }
+                
+                test $"When a 7 card is drawn, the active player should be able to move any pawn not on start forward 7 spaces or split between 2 pieces" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    let expectedActions = [
+                        Action.MovePawn(GreenPawn1, 7)
+                        Action.MovePawn(GreenPawn2, 7)
+                        Action.SplitMove7((GreenPawn1, 1), (GreenPawn2, 6))
+                        Action.SplitMove7((GreenPawn1, 2), (GreenPawn2, 5))
+                        Action.SplitMove7((GreenPawn1, 3), (GreenPawn2, 4))
+                        Action.SplitMove7((GreenPawn1, 4), (GreenPawn2, 3))
+                        Action.SplitMove7((GreenPawn1, 5), (GreenPawn2, 2))
+                        Action.SplitMove7((GreenPawn1, 6), (GreenPawn2, 1))
+                    ]
+                    match availableActions with
+                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece backwards 4"
+                    | Error _ -> failtest "Unexpected Error" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 7))
+                
+                test $"Expect token position to be updated when moving pawn forward 7" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Eight))
+                            "Expected pawn 1 to be moved forward 7 spaces to green 8"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect turn to move to next player" {
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                let newGameState = gameState |> GameState.tryChooseAction (Action.SplitMove7((GreenPawn1, 1),(GreenPawn2,6)))
+                
+                test $"Expect token 1 to be move forward 1 when splitting move 7 and moving pawn 1 forward 1" {
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Two))
+                            "Expected pawn 1 to be moved backwards 1 spaces to green 1"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"Expect token 2 to be move forward 6 when splitting move 7 and moving pawn 2 forward 6" {
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Red, OuterCoordinate.Seven))
+                            "Expected pawn 2 to be moved forward 6 spaces to red 7"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
             
             testList "Card 10 movement Tests" [
                 
@@ -533,6 +606,8 @@ let getAvailableActionTests =
                         Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
+                
+                // @TODO - test for can't bump piece on safety or home
             ]
         ]
         

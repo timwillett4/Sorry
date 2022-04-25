@@ -52,7 +52,8 @@ let BluePawn3 = {Color=Color.Blue;ID=PawnID.Three}
 
 type Action =
     | DrawCard
-    | MovePawn of Pawn*spaces:int
+    | MovePawn of pawn:Pawn*spaces:int
+    | SplitMove7 of move1:(Pawn*int)*move2:(Pawn*int)
     | SwitchPawns of pawn1:Pawn*pawn2:Pawn
     | Sorry of pawnOnStart:Pawn*pawnToBump:Pawn
     | PassTurn 

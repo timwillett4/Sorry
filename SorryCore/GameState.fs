@@ -101,12 +101,32 @@ let getAvailableActions game =
             ||> List.allPairs
             |> List.map Action.Sorry
             
+        let canSplitMove7WithAny2PiecesNotOnStart =
+            let splits = [(1,6);(2,5);(3,4);(4,3);(5,2);(6,1)]
+            
+            let pawnsEligibleToMove = boardPositions
+                                       |> Map.filter (fun pawn position -> pawn.Color = activeColor && position <> Start(pawn.Color))
+                                       |> Map.toList
+                                       |> List.map fst
+            
+            // Since known max pawns is 3 simpler to hard code all possibilities then come up with generic implementation
+            let pieceSplits =
+                match pawnsEligibleToMove with
+                | [pawn1; pawn2; pawn3] -> [(pawn1, pawn2);(pawn2, pawn3)]
+                | [pawn1; pawn2] -> [(pawn1, pawn2)]
+                | _ -> []
+                
+            (pieceSplits, splits)
+            ||> List.allPairs
+            |> List.map (fun ((pawn1, pawn2),(move1, move2)) -> SplitMove7((pawn1,move1),(pawn2,move2)))
+
         let actions = match game.DrawnCard with
                       | Card.One ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 1)
                       | Card.Two ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 2)
                       | Card.Three -> canMoveAnyPieceNotOnStart 3
                       | Card.Four -> canMoveAnyPieceNotOnStart -4
                       | Card.Five -> canMoveAnyPieceNotOnStart 5
+                      | Card.Seven -> (canMoveAnyPieceNotOnStart 7)@canSplitMove7WithAny2PiecesNotOnStart
                       | Card.Eight -> canMoveAnyPieceNotOnStart 8
                       | Card.Ten -> (canMoveAnyPieceNotOnStart 10)@(canMoveAnyPieceNotOnStart -1)
                       | Card.Eleven -> (canMoveAnyPieceNotOnStart 11)@canSwitchPlacesWithOpponentNotOnStartHomeOrSafety
@@ -293,17 +313,21 @@ let tryChooseAction action game =
                     | ChoosingAction(gameState) ->
                         match action with
                         | MovePawn(pawn,moveIncrement) ->
-                            let newGameState = gameState.BoardState |> movePawn pawn moveIncrement
+                            let newBoardState = gameState.BoardState |> movePawn pawn moveIncrement
                             match gameState.DrawnCard with
-                            | Card.Two -> Ok(Drawing(newGameState))
-                            | _ -> Ok(Drawing(newGameState |> updateActivePlayer))
-                        // Move 2 Pawns
+                            | Card.Two -> Ok(Drawing(newBoardState))
+                            | _ -> Ok(Drawing(newBoardState |> updateActivePlayer))
+                        | SplitMove7((pawn1, move1),(pawn2, move2)) ->
+                            let newBoardState = gameState.BoardState
+                                                |> movePawn pawn1 move1
+                                                |> movePawn pawn2 move2
+                            Ok(Drawing(newBoardState |> updateActivePlayer))
                         | SwitchPawns(pawn1,pawn2) ->
-                            let newGameState = gameState.BoardState |> switchPawns pawn1 pawn2
-                            Ok(Drawing(newGameState |> updateActivePlayer))
+                            let newBoardState = gameState.BoardState |> switchPawns pawn1 pawn2
+                            Ok(Drawing(newBoardState |> updateActivePlayer))
                         | Sorry(pawn1, pawn2) ->
-                            let newGameState = gameState.BoardState |> sorry pawn1 pawn2
-                            Ok(Drawing(newGameState |> updateActivePlayer))
+                            let newBoardState = gameState.BoardState |> sorry pawn1 pawn2
+                            Ok(Drawing(newBoardState |> updateActivePlayer))
                         | PassTurn -> Ok(Drawing(gameState.BoardState |> updateActivePlayer))
                         | _ -> Error(game, "Unimplemented")
                     | _ -> Error(game, "Unimplemented")
