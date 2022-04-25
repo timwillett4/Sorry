@@ -777,9 +777,10 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn2, 1))
                 
                 test $"When you land on a slide triangle on square 13, you piece should move an additional 3 spacs to the end of the slide region" {
+                    let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn2, 1))
+                    
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Blue, OuterCoordinate.One))
@@ -787,7 +788,49 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                // @TODO - do not slide when you land on your own slide square 
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Five)
+                           GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Twelve)
+                           GreenPawn3, BoardPosition.Start(Color.Green)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Seven)
+                           BluePawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Fourteen)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                    }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+                
+                test $"You should not slide when you land on your own slide 4 square" {
+                
+                    let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn1, 1))
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Six))
+                            "Expected pawn to not slide and just move forward 1 space"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                // @TODO - blue pawn1 should not be bumped
+                
+                let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn2, 1))
+                
+                // your own slide 3 square is on the previous colors outer 13 square
+                test $"You should not slide when you land on your own slide 3 square" {
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Yellow, OuterCoordinate.Thirteen))
+                            "Expected pawn to not slide and just move forward one square to yelloe 13"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                // @TODO - blue pawn2 should not be bumped
                 
                 // @TODO - your own piece also gets bumped if it is in slide region
             ]

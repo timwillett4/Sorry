@@ -303,7 +303,7 @@ let tryChooseAction action game =
                                                  // @TODO bump any pawn on slide region
           | Outer(color, OuterCoordinate.Thirteen) -> boardPosition
                                                       |> Map.add pawnToMove (Outer(color |> incrementColor 1, OuterCoordinate.One))
-                                                      // @TODO bump any pawn on slide region
+                                                      // @TODO bump any pawn on slide regioGreenGreenYellowkjkYou should not slide when you land on your own slide ou should not slide when you land on your own slide 3 4 Green, terCoordinate.Expected pawn to not slide and just move forward 1 SevenBluePawn2BluePawn2BlueYellowFourteen// @TODO - blue pawns should not be // your "own slide square is  3 quare is on the previous colors outer 13 pawn to not slide and just move forward one square to yell oe n
           | _ -> boardPosition
           
        let newBoardState =
