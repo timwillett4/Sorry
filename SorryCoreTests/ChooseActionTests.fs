@@ -729,7 +729,7 @@ let getAvailableActionTests =
             
             let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
             
-            test $"You should not be able to move onto your own piece" {
+            test $"You should not be able to move onto space occupied by your own pawn" {
                 let availableActions = gameState |> GameState.getAvailableActions 
                 
                 let expectedActions = [Action.MovePawn(GreenPawn2, 1)]
