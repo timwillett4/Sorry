@@ -10,6 +10,22 @@ let getAvailableActionTests =
         let levi = {Name="Levi"; Color=Color.Green}
         let dad = {Name="Dad"; Color=Color.Blue}
         
+        let GreenPawn1 = {Color=Color.Green;ID=PawnID.One}
+        let GreenPawn2 = {Color=Color.Green;ID=PawnID.Two}
+        let GreenPawn3 = {Color=Color.Green;ID=PawnID.Three}
+
+        let RedPawn1 = {Color=Color.Red;ID=PawnID.One}
+        let RedPawn2 = {Color=Color.Red;ID=PawnID.Two}
+        let RedPawn3 = {Color=Color.Red;ID=PawnID.Three}
+
+        let YellowPawn1 = {Color=Color.Yellow;ID=PawnID.One}
+        let YellowPawn2 = {Color=Color.Yellow;ID=PawnID.Two}
+        let YellowPawn3 = {Color=Color.Yellow;ID=PawnID.Three}
+
+        let BluePawn1 = {Color=Color.Blue;ID=PawnID.One}
+        let BluePawn2 = {Color=Color.Blue;ID=PawnID.Two}
+        let BluePawn3 = {Color=Color.Blue;ID=PawnID.Three}
+        
         let initialBoardState = {
                Deck = newDeck
                RandomNumberGenerator = fun () -> 0
