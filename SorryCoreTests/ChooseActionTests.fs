@@ -750,7 +750,7 @@ let getAvailableActionTests =
                            GreenPawn2, BoardPosition.Start(Color.Green)
                            GreenPawn3, BoardPosition.Start(Color.Green)
                            
-                           BluePawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Six)
+                           BluePawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Seven)
                            BluePawn2, BoardPosition.Start(Color.Blue)
                            BluePawn3, BoardPosition.Start(Color.Blue)
                        ] |> Map.ofList
@@ -769,7 +769,13 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                // @TODO blue piece shoud get bumped
+                test $"When another piece is on the slide square it should get bumped back to start" {
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
+                            "Expected blue pawn 1 to get bumped back to start"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
                 
                 // @TODO slide 3 on square 13
                 
