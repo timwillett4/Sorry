@@ -223,23 +223,21 @@ let tryChooseAction action game =
        
     // try move pawn or do we assume its legal
     // as we already found available moves???
-    let movePawn (pawn:Pawn) moveIncrement gameState =
-       
-       // @TODO - add to core extension math 
-       let wrap max n = (n + max) % max
+    let movePawn (pawnToMove:Pawn) moveIncrement gameState =
        let nColors = 4
        let nSpacePerColor = 15
+       let wrap max n = (n + max) % max
        
-       // Converts to a 0(start) to 66(home) representing
-       // local coordinates for particular color
+       /// Converts board position to 1 first square out of start to 65(home) representing
+       /// local coordinates for a particular color
        let toLocal localColor boardPosition =
            match boardPosition with
            | Home(color)->
                assert(color = localColor)
-               66
+               65
            | Safety(color, safetySquare) ->
                assert(color = localColor)
-               (safetySquare |> int) + 60
+               (safetySquare |> int) + 59
            | Outer(color, coord) ->
                // calculate how many colors away from the local color we are
                // Example: Colors are in order Green->Red->Blue->Yellow
@@ -254,19 +252,19 @@ let tryChooseAction action game =
            | outer when localPosition >= 1 && localPosition <= 60 ->
                let colorDiff = localPosition / nSpacePerColor
                let outerCoord = localPosition - (colorDiff * nSpacePerColor)
-               let color = ((pawn.Color |> int) + colorDiff) % nColors |> enum<Color>
+               let color = ((pawnToMove.Color |> int) + colorDiff) % nColors |> enum<Color>
                Outer(color, outerCoord |> enum)
            // This occurs when you are at or near the opening square and move backward
            | outer when localPosition <= 0 && localPosition >= -3 ->
                let color = ((localColor |> int) - 1) |> wrap nColors
                let color = color |> enum
                Outer(color, nSpacePerColor + localPosition |> enum)
-           | safety when localPosition >= 61 && localPosition <= 65 ->
-               Safety(localColor, (localPosition - 60) |> enum)
-           | home when localPosition = 66 -> Home(pawn.Color)
+           | safety when localPosition >= 60 && localPosition <= 64 ->
+               Safety(localColor, (localPosition - 59) |> enum)
+           | home when localPosition = 65 -> Home(pawnToMove.Color)
            | _ -> failwith $"Invalid board position"
                
-       let currentPosition = gameState.TokenPositions.[pawn]
+       let currentPosition = gameState.TokenPositions.[pawnToMove]
        
        let newPosition =
            match currentPosition with 
@@ -274,13 +272,24 @@ let tryChooseAction action game =
                assert(moveIncrement = 1)
                Outer(color, OuterCoordinate.One)
            | position ->
-               let local = position |> toLocal pawn.Color
+               let local = position |> toLocal pawnToMove.Color
                let newLocal = local + moveIncrement
-               let newBoardPosition = newLocal |> toBoardPosition pawn.Color
-               ((position |> toLocal pawn.Color) + moveIncrement) |> toBoardPosition pawn.Color
+               let newBoardPosition = newLocal |> toBoardPosition pawnToMove.Color
+               ((position |> toLocal pawnToMove.Color) + moveIncrement) |> toBoardPosition pawnToMove.Color
                
-       let newBoardState = gameState.TokenPositions.Add (pawn, newPosition)
        
+       let sendOpponentBackToStartIfYouLandOnHim tokenPositions =
+           let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ position -> position = newPosition)
+                                
+           match opponentToBump with
+           | Some(pawn) -> gameState.TokenPositions.Add(pawn, Start(pawn.Color))
+           | None -> gameState.TokenPositions
+       
+       let newBoardState =
+           gameState.TokenPositions
+           |> sendOpponentBackToStartIfYouLandOnHim
+           |> Map.add pawnToMove newPosition
+        
        {gameState with TokenPositions=newBoardState}
        
     let switchPawns pawn1 pawn2 (gameState:BoardState) =

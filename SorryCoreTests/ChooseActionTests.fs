@@ -683,11 +683,44 @@ let getAvailableActionTests =
                     | Error _ -> failtest "Unexpected Error" 
                 }
             ]
+            
+            testList "Landing on opponent piece tests" [
+                let levi = {Name="Levi"; Color=Color.Green}
+                let dad = {Name="Dad"; Color=Color.Blue}
+                
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                           GreenPawn2, BoardPosition.Start(Color.Green)
+                           GreenPawn3, BoardPosition.Start(Color.Green)
+                           
+                           BluePawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
+                           BluePawn2, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start(Color.Blue)
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                    }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+                
+                
+                test $"When you land on your opponents space there piece should be sent back to home" {
+                    let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
+                            "Expected blue pawn 1 to go back to start"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+            ]
         ]
         
-        // @TODO - test for landing on opponent piece
         // @TODO - test for landing on boost squares
-        // @TODO - test for can't land on your own space
+        // @TODO - test for can't land on your own piece
         // @TODO - test for can't move
         // @TODO - test for getting home
         // @TODO - test for backwards from safety
