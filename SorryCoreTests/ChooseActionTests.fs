@@ -172,8 +172,6 @@ let getAvailableActionTests =
         |> List.collect canNotMoveFromStart |> testList "Can not move from start with any card other than one or two test"
         
         testList "Move token tests" [
-            let levi = {Name="Levi"; Color=Color.Green}
-            let dad = {Name="Dad"; Color=Color.Blue}
             
             // tests for cards that you just move the number of squares it shows on card
             let basicMovementCardsTests (card:Card) (expectedMove:int) (expectedMoveSquare:BoardPosition) =
@@ -513,7 +511,7 @@ let getAvailableActionTests =
                         Action.SwitchPawns(GreenPawn3, BluePawn1)
                         ]
                     match availableActions with
-                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move any piece forwards 11 or switch with an opponents piece"
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece forwards 11 or switch with an opponents piece"
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
@@ -583,7 +581,7 @@ let getAvailableActionTests =
                     ]
                     
                     match availableActions with
-                    | Ok(actions) -> Expect.containsAll actions expectedActions "Expected to be able to move all pieces 11 but not swtich with a"
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move all pieces 11 but not swtich with a"
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 // @TODO - 11 Special Rules:
@@ -593,8 +591,6 @@ let getAvailableActionTests =
             ]
             
             testList "Card 'Sorry' movement tests" [
-                let levi = {Name="Levi"; Color=Color.Green}
-                let dad = {Name="Dad"; Color=Color.Blue}
                 
                 let boardState = {
                        Deck = newDeck
@@ -684,44 +680,66 @@ let getAvailableActionTests =
                 }
             ]
             
-            testList "Landing on opponent piece tests" [
-                let levi = {Name="Levi"; Color=Color.Green}
-                let dad = {Name="Dad"; Color=Color.Blue}
-                
-                let boardState = {
-                       Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
-                       Players = [levi;dad]
-                       TokenPositions = [
-                           GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
-                           GreenPawn2, BoardPosition.Start(Color.Green)
-                           GreenPawn3, BoardPosition.Start(Color.Green)
-                           
-                           BluePawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
-                           BluePawn2, BoardPosition.Start(Color.Blue)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
-                       ] |> Map.ofList
-                       ActivePlayer = levi
-                    }
-                
-                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
-                
-                
-                test $"When you land on your opponents space there piece should be sent back to home" {
-                    let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
-                            "Expected blue pawn 1 to go back to start"
-                    | _ -> failtest "Expected game to transition to draw state" 
+            let boardState = {
+                   Deck = newDeck
+                   RandomNumberGenerator = fun () -> 0
+                   Players = [levi;dad]
+                   TokenPositions = [
+                       GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                       GreenPawn2, BoardPosition.Start(Color.Green)
+                       GreenPawn3, BoardPosition.Start(Color.Green)
+                       
+                       BluePawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
+                       BluePawn2, BoardPosition.Start(Color.Blue)
+                       BluePawn3, BoardPosition.Start(Color.Blue)
+                   ] |> Map.ofList
+                   ActivePlayer = levi
                 }
-            ]
-        ]
+            
+            let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+            
+            
+            test $"When you land on your opponents space there piece should be sent back to home" {
+                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                
+                match newGameState with
+                | Ok(Drawing(gameState)) -> 
+                    Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
+                        "Expected blue pawn 1 to go back to start"
+                | _ -> failtest "Expected game to transition to draw state" 
+            }
         
+            let boardState = {
+                   Deck = newDeck
+                   RandomNumberGenerator = fun () -> 0
+                   Players = [levi;dad]
+                   TokenPositions = [
+                       GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                       GreenPawn2, BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
+                       GreenPawn3, BoardPosition.Start(Color.Green)
+                       
+                       BluePawn1, BoardPosition.Start(Color.Blue)
+                       BluePawn2, BoardPosition.Start(Color.Blue)
+                       BluePawn3, BoardPosition.Start(Color.Blue)
+                   ] |> Map.ofList
+                   ActivePlayer = levi
+                }
+            
+            let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+            
+            test $"You should not be able to move onto your own piece" {
+                let availableActions = gameState |> GameState.getAvailableActions 
+                
+                let expectedActions = [Action.MovePawn(GreenPawn2, 1)]
+                
+                match availableActions with
+                | Ok(actions) -> Expect.equal actions expectedActions "Expected to only be able to move pawn 2 1 space"
+                | Error _ -> failtest "Unexpected Error" 
+            }
         // @TODO - test for landing on boost squares
         // @TODO - test for can't land on your own piece
         // @TODO - test for can't move
         // @TODO - test for getting home
         // @TODO - test for backwards from safety
+        ]
     ]

@@ -20,6 +20,54 @@ let newGame = SettingUp({Players=[]})
 /// getChosenColors returns a list of the colors that have already been chosen
 let private getChosenColors (game:SetupState) = game.Players |> List.map (fun player -> player.Color)
 
+/// Converts board position to 1 first square out of start to 65(home) representing
+/// local coordinates for a particular color
+
+let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
+    let nColors = 4
+    let nSpacePerColor = 15
+    let wrap max n = (n + max) % max
+    
+    let toLocal boardPosition =
+       match boardPosition with
+       | Home(color)->
+           assert(color = localColor)
+           65
+       | Safety(color, safetySquare) ->
+           assert(color = localColor)
+           (safetySquare |> int) + 59
+       | Outer(color, coord) ->
+           // calculate how many colors away from the local color we are
+           // Example: Colors are in order Green->Red->Blue->Yellow
+           let colorDist = (color |> int) - (localColor |> int) |> wrap nColors
+           (colorDist * nSpacePerColor) + (coord |> int)
+       | Start(color) ->
+           assert(color = localColor)
+           failwith $"Start square is special square and can not be used with to local"
+
+    let toBoardPosition localPosition =
+        match localPosition with
+        | _ when localPosition >= 1 && localPosition <= 60 ->
+            let colorDiff = localPosition / nSpacePerColor
+            let outerCoord = localPosition - (colorDiff * nSpacePerColor)
+            let color = ((localColor |> int) + colorDiff) % nColors |> enum<Color>
+            Outer(color, outerCoord |> enum)
+        // This occurs when you are at or near the opening square and move backward
+        | _ when localPosition <= 0 && localPosition >= -3 ->
+            let color = ((localColor |> int) - 1) |> wrap nColors
+            let color = color |> enum
+            Outer(color, nSpacePerColor + localPosition |> enum)
+        | _ when localPosition >= 60 && localPosition <= 64 ->
+            Safety(localColor, (localPosition - 59) |> enum)
+        | _ when localPosition = 65 -> Home(localColor)
+        | _ -> failwith $"Invalid board position"
+       
+    match currentPosition with 
+    | Start(color) ->
+        assert(moveIncrement = 1)
+        Outer(color, OuterCoordinate.One)
+    | position -> ((position |> toLocal) + moveIncrement) |> toBoardPosition
+        
 /// getAvailableColors returns the available colors left to choose from
 /// this query is only valid before a game has been started via calling 'startGame'
 let getAvailableColors game =
@@ -60,11 +108,19 @@ let getAvailableActions game =
             | Outer _ -> true
             | _ -> false
         
-        let canMoveAnyPiece predicate spaces =
+        let canMoveAnyPiece predicate moveIncrement =
+            let ownPieceIsNotOnMoveToSquare (pawn:Pawn, position) =
+               let newPosition = position |> positionAheadOfCurrentBy moveIncrement pawn.Color
+               let pieceOnMoveToSquare = boardPositions |> Map.tryFindKey (fun pawn position -> pawn.Color = activeColor && position = newPosition)
+               match pieceOnMoveToSquare with
+               | Some _ -> false
+               | None -> true
+                   
             boardPositions
             |> Map.toList
             |> List.filter (fun (pawn, position) -> pawn.Color = activeColor && position |> predicate)
-            |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, spaces))
+            |> List.filter ownPieceIsNotOnMoveToSquare 
+            |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, moveIncrement))
             
         let canMoveAnyPieceOutOfStart = canMoveAnyPiece (fun position -> position = Start(activeColor)) 1
                                             
@@ -224,59 +280,10 @@ let tryChooseAction action game =
     // try move pawn or do we assume its legal
     // as we already found available moves???
     let movePawn (pawnToMove:Pawn) moveIncrement gameState =
-       let nColors = 4
-       let nSpacePerColor = 15
-       let wrap max n = (n + max) % max
        
-       /// Converts board position to 1 first square out of start to 65(home) representing
-       /// local coordinates for a particular color
-       let toLocal localColor boardPosition =
-           match boardPosition with
-           | Home(color)->
-               assert(color = localColor)
-               65
-           | Safety(color, safetySquare) ->
-               assert(color = localColor)
-               (safetySquare |> int) + 59
-           | Outer(color, coord) ->
-               // calculate how many colors away from the local color we are
-               // Example: Colors are in order Green->Red->Blue->Yellow
-               let colorDist = (color |> int) - (localColor |> int) |> wrap nColors
-               (colorDist * nSpacePerColor) + (coord |> int)
-           | Start(color) ->
-               assert(color = localColor)
-               failwith $"Start square is special square and can not be used with to local"
-
-       let toBoardPosition localColor localPosition =
-           match localPosition with
-           | outer when localPosition >= 1 && localPosition <= 60 ->
-               let colorDiff = localPosition / nSpacePerColor
-               let outerCoord = localPosition - (colorDiff * nSpacePerColor)
-               let color = ((pawnToMove.Color |> int) + colorDiff) % nColors |> enum<Color>
-               Outer(color, outerCoord |> enum)
-           // This occurs when you are at or near the opening square and move backward
-           | outer when localPosition <= 0 && localPosition >= -3 ->
-               let color = ((localColor |> int) - 1) |> wrap nColors
-               let color = color |> enum
-               Outer(color, nSpacePerColor + localPosition |> enum)
-           | safety when localPosition >= 60 && localPosition <= 64 ->
-               Safety(localColor, (localPosition - 59) |> enum)
-           | home when localPosition = 65 -> Home(pawnToMove.Color)
-           | _ -> failwith $"Invalid board position"
-               
        let currentPosition = gameState.TokenPositions.[pawnToMove]
        
-       let newPosition =
-           match currentPosition with 
-           | Start(color) ->
-               assert(moveIncrement = 1)
-               Outer(color, OuterCoordinate.One)
-           | position ->
-               let local = position |> toLocal pawnToMove.Color
-               let newLocal = local + moveIncrement
-               let newBoardPosition = newLocal |> toBoardPosition pawnToMove.Color
-               ((position |> toLocal pawnToMove.Color) + moveIncrement) |> toBoardPosition pawnToMove.Color
-               
+       let newPosition = currentPosition |> positionAheadOfCurrentBy moveIncrement pawnToMove.Color
        
        let sendOpponentBackToStartIfYouLandOnHim tokenPositions =
            let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ position -> position = newPosition)
