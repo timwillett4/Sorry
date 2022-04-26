@@ -280,7 +280,42 @@ let tryChooseAction action game =
        let currentIndex = gameState.Players |> List.findIndex (fun player -> player = gameState.ActivePlayer)
        let nextIndex = currentIndex + 1 % gameState.Players.Length
        {gameState with ActivePlayer=gameState.Players.[nextIndex]}
-       
+                         
+    let sendPawnBackToStartIfOnPosition (position:BoardPosition) (tokenPositions:TokenPositions) =
+        let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ p -> p = position)
+                                
+        match opponentToBump with
+        | Some(pawn) -> tokenPositions |> Map.add pawn (Start(pawn.Color))
+        | None -> tokenPositions
+        
+    let slideIfPawnLandsOnSlideSquare pawnToMove (tokenPositions: TokenPositions) =
+          
+        let bumpAnyPawnInSlideRegion (slideSquares:BoardPosition list) (tokenPositions:TokenPositions) =
+            tokenPositions |> List.foldBack sendPawnBackToStartIfOnPosition slideSquares
+              
+        match tokenPositions.[pawnToMove] with
+        | Outer(color, OuterCoordinate.Six) ->
+            let slideSquares =  [ for i in 6..10 -> Outer(color, i |> enum) ]
+            if color <> pawnToMove.Color then
+                tokenPositions
+                |> bumpAnyPawnInSlideRegion slideSquares
+                |> Map.add pawnToMove (Outer(color, OuterCoordinate.Ten))
+            else
+                tokenPositions 
+        | Outer(color, OuterCoordinate.Thirteen) ->
+            let slideEnd = Outer(color |> incrementColor 1, OuterCoordinate.One)
+            let slideSquares =  [ for i in 13..15 -> Outer(color, i |> enum) ] @ [slideEnd]
+              
+            // your own slide 3 is actually behind starting square so in previous color outer region
+            let ownSlideColor = pawnToMove.Color |> incrementColor -1
+            if color <> ownSlideColor then
+                tokenPositions
+                |> bumpAnyPawnInSlideRegion slideSquares
+                |> Map.add pawnToMove slideEnd
+            else
+                tokenPositions 
+        | _ -> tokenPositions
+          
     // try move pawn or do we assume its legal
     // as we already found available moves???
     let movePawn (pawnToMove:Pawn) moveIncrement gameState =
@@ -288,47 +323,12 @@ let tryChooseAction action game =
        let currentPosition = gameState.TokenPositions.[pawnToMove]
        
        let newPosition = currentPosition |> positionAheadOfCurrentBy moveIncrement pawnToMove.Color
-                         
-       let sendPawnBackToStartIfOnPosition (position:BoardPosition) (tokenPositions:TokenPositions) =
-           let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ p -> p = position)
-                                
-           match opponentToBump with
-           | Some(pawn) -> tokenPositions |> Map.add pawn (Start(pawn.Color))
-           | None -> tokenPositions
-           
-       let slideIfPawnLandsOnSlideSquare tokenPositions =
-          
-          let bumpAnyPawnInSlideRegion (slideSquares:BoardPosition list) (tokenPositions:TokenPositions) =
-              tokenPositions |> List.foldBack sendPawnBackToStartIfOnPosition slideSquares
-              
-          match newPosition with
-          | Outer(color, OuterCoordinate.Six) ->
-              let slideSquares =  [ for i in 6..10 -> Outer(color, i |> enum) ]
-              if color <> pawnToMove.Color then
-                 tokenPositions
-                 |> bumpAnyPawnInSlideRegion slideSquares
-                 |> Map.add pawnToMove (Outer(color, OuterCoordinate.Ten))
-              else
-                 tokenPositions 
-          | Outer(color, OuterCoordinate.Thirteen) ->
-              let slideEnd = Outer(color |> incrementColor 1, OuterCoordinate.One)
-              let slideSquares =  [ for i in 13..15 -> Outer(color, i |> enum) ] @ [slideEnd]
-              
-              // your own slide 3 is actually behind starting square so in previous color outer region
-              let ownSlideColor = pawnToMove.Color |> incrementColor -1
-              if color <> ownSlideColor then
-                 tokenPositions
-                 |> bumpAnyPawnInSlideRegion slideSquares
-                 |> Map.add pawnToMove slideEnd
-              else
-                 tokenPositions 
-          | _ -> tokenPositions
           
        let newBoardState =
            gameState.TokenPositions
            |> sendPawnBackToStartIfOnPosition newPosition
            |> Map.add pawnToMove newPosition
-           |> slideIfPawnLandsOnSlideSquare
+           |> slideIfPawnLandsOnSlideSquare pawnToMove
        
        {gameState with TokenPositions=newBoardState}
        
@@ -338,6 +338,8 @@ let tryChooseAction action game =
         let newTokenPositions = gameState.TokenPositions
                                 |> Map.add pawn1 pawn2Pos
                                 |> Map.add pawn2 pawn1Pos
+                                |> slideIfPawnLandsOnSlideSquare pawn1
+                                |> slideIfPawnLandsOnSlideSquare pawn2
                                 
         {gameState with TokenPositions=newTokenPositions}
        
