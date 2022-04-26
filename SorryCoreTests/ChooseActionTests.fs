@@ -584,10 +584,41 @@ let getAvailableActionTests =
                     | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move all pieces 11 but not swtich with a"
                     | Error _ -> failtest "Unexpected Error" 
                 }
+                // @TODO -     If you switch with a player on boost square you get to boost
+                
+    
+                
+                test $"If you switch with a player on a boost square, you should boost to end of slide region" {
+                    let boardState = {
+                           Deck = newDeck
+                           RandomNumberGenerator = fun () -> 0
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                               GreenPawn2, BoardPosition.Start(Color.Green)
+                               GreenPawn3, BoardPosition.Start(Color.Green)
+                               
+                               BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.Six)
+                               BluePawn2, BoardPosition.Start(Color.Blue)
+                               BluePawn2, BoardPosition.Start(Color.Blue)
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                    } 
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eleven }
+                    
+                    let newGameState = gameState |> GameState.tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Blue, OuterCoordinate.Ten))
+                            "Expected green pawn 1 to move to position where blue pawn 1 was AND then slide to end of boost region"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                    
+                }
                 // @TODO - 11 Special Rules:
                 // @TODO -     Allowed to pass instead of use switch if you can't move 11
                 
-                // @TODO -     If you switch with a player on boost square you get to boost
             ]
             
             testList "Card 'Sorry' movement tests" [
