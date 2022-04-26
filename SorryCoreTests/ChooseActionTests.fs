@@ -748,7 +748,7 @@ let getAvailableActionTests =
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Five)
                            GreenPawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.Twelve)
-                           GreenPawn3, BoardPosition.Start(Color.Green)
+                           GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.Eight)
                            
                            BluePawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Seven)
                            BluePawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.Fourteen)
@@ -773,6 +773,14 @@ let getAvailableActionTests =
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
+                            "Expected blue pawn 1 to get bumped back to start"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
+                
+                test $"When your own piece is in the slide 4 region it should also get bumped back to start" {
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn3] (Start(Color.Green))
                             "Expected blue pawn 1 to get bumped back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
@@ -853,8 +861,6 @@ let getAvailableActionTests =
                             "Expected blue pawn 2 to remain on yellow 14"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
-                
-                // @TODO - your own piece also gets bumped if it is in slide region
             ]
             
             // @TODO - test for can't move
