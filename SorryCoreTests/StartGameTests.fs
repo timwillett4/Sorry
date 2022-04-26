@@ -90,7 +90,7 @@ let startGameTests =
                 let! game = game |> GameState.tryStartGame (fun () -> 1)
                 let! tokens = game |> GameState.getTokenPositions
                     
-                return tokens |> Map.forall (fun (pawn:Pawn) position -> position = BoardPosition.Start(pawn.Color))
+                return tokens |> Map.forall (fun _ position -> position = BoardPosition.Start)
             }
             
             match allPiecesOnHomeSquare with

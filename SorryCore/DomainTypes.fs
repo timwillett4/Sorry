@@ -165,10 +165,9 @@ type SafetySquare =
     
 type BoardPosition = 
     | Outer of Color * OuterCoordinate
-    // @TODO - color shouldGamepiece  be removed from below and just assume it is color of pawn in order to make invalid state unrepresentable
-    | Safety of Color * SafetySquare
-    | Start of Color   
-    | Home of Color
+    | Safety of SafetySquare
+    | Start 
+    | Home 
 
 /// Board state is a map storing where each pawn is on board 
 type TokenPositions = Map<Pawn, BoardPosition>

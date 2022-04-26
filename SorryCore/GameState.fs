@@ -34,19 +34,16 @@ let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
     
     let toLocal boardPosition =
        match boardPosition with
-       | Home(color)->
-           assert(color = localColor)
+       | Home ->
            65
-       | Safety(color, safetySquare) ->
-           assert(color = localColor)
+       | Safety(safetySquare) ->
            (safetySquare |> int) + 59
        | Outer(color, coord) ->
            // calculate how many colors away from the local color we are
            // Example: Colors are in order Green->Red->Blue->Yellow
            let colorDist = (color |> int) - (localColor |> int) |> wrap nColors
            (colorDist * nSpacePerColor) + (coord |> int)
-       | Start(color) ->
-           assert(color = localColor)
+       | Start ->
            failwith $"Start square is special square and can not be used with to local"
 
     let toBoardPosition localPosition =
@@ -62,14 +59,14 @@ let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
             let color = color |> enum
             Outer(color, nSpacePerColor + localPosition |> enum)
         | _ when localPosition >= 60 && localPosition <= 64 ->
-            Safety(localColor, (localPosition - 59) |> enum)
-        | _ when localPosition = 65 -> Home(localColor)
+            Safety((localPosition - 59) |> enum)
+        | _ when localPosition = 65 -> Home
         | _ -> failwith $"Invalid board position"
        
     match currentPosition with 
-    | Start(color) ->
+    | Start ->
         assert(moveIncrement = 1)
-        Outer(color, OuterCoordinate.One)
+        Outer(localColor, OuterCoordinate.One)
     | position -> ((position |> toLocal) + moveIncrement) |> toBoardPosition
         
 /// getAvailableColors returns the available colors left to choose from
@@ -126,9 +123,9 @@ let getAvailableActions game =
             |> List.filter ownPawnIsNotOnMoveToSquare 
             |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, moveIncrement))
             
-        let canMoveAnyPieceOutOfStart = canMoveAnyPiece (fun position -> position = Start(activeColor)) 1
+        let canMoveAnyPieceOutOfStart = canMoveAnyPiece (fun position -> position = Start) 1
                                             
-        let canMoveAnyPieceNotOnStart = canMoveAnyPiece (fun position -> position <> Start(activeColor))
+        let canMoveAnyPieceNotOnStart = canMoveAnyPiece (fun position -> position <> Start)
         
         let canSwitchPlacesWithOpponentNotOnStartHomeOrSafety =
             
@@ -153,7 +150,7 @@ let getAvailableActions game =
             let activePiecesOnStart = boardPositions
                                       |> Map.toList
                                       |> List.filter (fun (pawn, position) -> pawn.Color = activeColor
-                                                                              && position = Start(pawn.Color))
+                                                                              && position = Start)
                                       |> List.map fst
                                       
             let opponentPiecesNotOnStartHomeOrSafety = boardPositions
@@ -169,7 +166,7 @@ let getAvailableActions game =
             let splits = [(1,6);(2,5);(3,4);(4,3);(5,2);(6,1)]
             
             let pawnsEligibleToMove = boardPositions
-                                       |> Map.filter (fun pawn position -> pawn.Color = activeColor && position <> Start(pawn.Color))
+                                       |> Map.filter (fun pawn position -> pawn.Color = activeColor && position <> Start)
                                        |> Map.toList
                                        |> List.map fst
             
@@ -249,9 +246,9 @@ let tryStartGame random game =
             let initializeTokenPositions (players:Player list) =
                 players
                 |> List.map (fun player ->
-                    [{Color=player.Color;ID=PawnID.One}, BoardPosition.Start(player.Color)
-                     {Color=player.Color;ID=PawnID.Two}, BoardPosition.Start(player.Color)
-                     {Color=player.Color;ID=PawnID.Three}, BoardPosition.Start(player.Color)])
+                    [{Color=player.Color;ID=PawnID.One}, BoardPosition.Start
+                     {Color=player.Color;ID=PawnID.Two}, BoardPosition.Start
+                     {Color=player.Color;ID=PawnID.Three}, BoardPosition.Start])
                 |> List.reduce (fun colors1 colors2 -> colors1 @ colors2)
                 |> Map.ofList
                 
@@ -285,7 +282,7 @@ let tryChooseAction action game =
         let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ p -> p = position)
                                 
         match opponentToBump with
-        | Some(pawn) -> tokenPositions |> Map.add pawn (Start(pawn.Color))
+        | Some(pawn) -> tokenPositions |> Map.add pawn Start
         | None -> tokenPositions
         
     let slideIfPawnLandsOnSlideSquare pawnToMove (tokenPositions: TokenPositions) =
@@ -344,11 +341,11 @@ let tryChooseAction action game =
         {gameState with TokenPositions=newTokenPositions}
        
     let sorry pawnOnStart pawnToBump (gameState:BoardState) =
-        assert(gameState.TokenPositions.[pawnOnStart] = Start(pawnOnStart.Color))
+        assert(gameState.TokenPositions.[pawnOnStart] = Start)
         let pawnToBumpPos = gameState.TokenPositions.[pawnToBump]
         let newTokenPositions = gameState.TokenPositions
                                 |> Map.add pawnOnStart pawnToBumpPos
-                                |> Map.add pawnToBump (Start(pawnToBump.Color))
+                                |> Map.add pawnToBump Start
         
         {gameState with TokenPositions=newTokenPositions}
         

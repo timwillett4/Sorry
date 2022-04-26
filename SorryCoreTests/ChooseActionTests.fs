@@ -1,4 +1,4 @@
-﻿module SorryCoreTests.MoveActionsTests
+﻿module SorryCoreTests.ChooseActionsTests
 
 open Sorry.Core
 open Expecto
@@ -31,13 +31,13 @@ let getAvailableActionTests =
                RandomNumberGenerator = fun () -> 0
                Players = [levi;dad]
                TokenPositions = [
-                   GreenPawn1, Start(Color.Green)
-                   GreenPawn2, Start(Color.Green)
-                   GreenPawn3, Start(Color.Green)
+                   GreenPawn1, Start
+                   GreenPawn2, Start
+                   GreenPawn3, Start
                    
-                   BluePawn1, BoardPosition.Start(Color.Blue)
-                   BluePawn2, BoardPosition.Start(Color.Blue)
-                   BluePawn3, BoardPosition.Start(Color.Blue)
+                   BluePawn1, BoardPosition.Start
+                   BluePawn2, BoardPosition.Start
+                   BluePawn3, BoardPosition.Start
                ] |> Map.ofList
                ActivePlayer = levi
             }
@@ -185,9 +185,9 @@ let getAvailableActionTests =
                            GreenPawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.Two)
                            GreenPawn3, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Two)
                            
-                           BluePawn1, BoardPosition.Start(Color.Blue)
-                           BluePawn2, BoardPosition.Start(Color.Blue)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn1, BoardPosition.Start
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                 }
@@ -240,8 +240,8 @@ let getAvailableActionTests =
                            GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
                            
                            BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
-                           BluePawn2, BoardPosition.Start(Color.Blue)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                 }
@@ -289,8 +289,8 @@ let getAvailableActionTests =
                            GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
                            
                            BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
-                           BluePawn2, BoardPosition.Start(Color.Blue)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                 }
@@ -348,11 +348,11 @@ let getAvailableActionTests =
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
                            GreenPawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
-                           GreenPawn3, BoardPosition.Start(Color.Green)
+                           GreenPawn3, BoardPosition.Start
                            
-                           BluePawn1, BoardPosition.Start(Color.Blue)
-                           BluePawn2, BoardPosition.Start(Color.Blue)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn1, BoardPosition.Start
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                 }
@@ -426,8 +426,8 @@ let getAvailableActionTests =
                            GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
                            
                            BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
-                           BluePawn2, BoardPosition.Start(Color.Blue)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                 }
@@ -491,8 +491,8 @@ let getAvailableActionTests =
                            GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
                            
                            BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
-                           BluePawn2, BoardPosition.Start(Color.Blue)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                 }
@@ -561,9 +561,9 @@ let getAvailableActionTests =
                            GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.One)
                            GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
                            
-                           BluePawn1, BoardPosition.Start(Color.Blue)
-                           BluePawn2, BoardPosition.Home(Color.Blue)
-                           BluePawn3, BoardPosition.Safety(Color.Blue, SafetySquare.One)
+                           BluePawn1, BoardPosition.Start
+                           BluePawn2, BoardPosition.Home
+                           BluePawn3, BoardPosition.Safety(SafetySquare.One)
                        ] |> Map.ofList
                        ActivePlayer = levi
                 }
@@ -595,12 +595,12 @@ let getAvailableActionTests =
                            Players = [levi;dad]
                            TokenPositions = [
                                GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
-                               GreenPawn2, BoardPosition.Start(Color.Green)
-                               GreenPawn3, BoardPosition.Start(Color.Green)
+                               GreenPawn2, BoardPosition.Start
+                               GreenPawn3, BoardPosition.Start
                                
                                BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.Six)
-                               BluePawn2, BoardPosition.Start(Color.Blue)
-                               BluePawn2, BoardPosition.Start(Color.Blue)
+                               BluePawn2, BoardPosition.Start
+                               BluePawn2, BoardPosition.Start
                            ] |> Map.ofList
                            ActivePlayer = levi
                     } 
@@ -628,13 +628,13 @@ let getAvailableActionTests =
                        RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
-                           GreenPawn1, BoardPosition.Start(Color.Green)
-                           GreenPawn2, BoardPosition.Start(Color.Green)
+                           GreenPawn1, BoardPosition.Start
+                           GreenPawn2, BoardPosition.Start
                            GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
                            
                            BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
                            BluePawn2, BoardPosition.Outer(Color.Blue, OuterCoordinate.Two)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start 
                        ] |> Map.ofList
                        ActivePlayer = levi
                     }
@@ -671,7 +671,7 @@ let getAvailableActionTests =
                     
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
+                        Expect.equal gameState.TokenPositions.[BluePawn1] Start
                             "Expected blue pawn 1 to go back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
@@ -689,13 +689,13 @@ let getAvailableActionTests =
                        RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
-                           GreenPawn1, BoardPosition.Start(Color.Green)
-                           GreenPawn2, BoardPosition.Start(Color.Green)
+                           GreenPawn1, BoardPosition.Start
+                           GreenPawn2, BoardPosition.Start
                            GreenPawn3, BoardPosition.Outer(Color.Red, OuterCoordinate.One)
                            
-                           BluePawn1, BoardPosition.Home(Color.Blue)
-                           BluePawn2, BoardPosition.Safety(Color.Blue, SafetySquare.Two)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn1, BoardPosition.Home
+                           BluePawn2, BoardPosition.Safety(SafetySquare.Two)
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                     }
@@ -719,12 +719,12 @@ let getAvailableActionTests =
                    Players = [levi;dad]
                    TokenPositions = [
                        GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
-                       GreenPawn2, BoardPosition.Start(Color.Green)
-                       GreenPawn3, BoardPosition.Start(Color.Green)
+                       GreenPawn2, BoardPosition.Start
+                       GreenPawn3, BoardPosition.Start
                        
                        BluePawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
-                       BluePawn2, BoardPosition.Start(Color.Blue)
-                       BluePawn3, BoardPosition.Start(Color.Blue)
+                       BluePawn2, BoardPosition.Start
+                       BluePawn3, BoardPosition.Start
                    ] |> Map.ofList
                    ActivePlayer = levi
                 }
@@ -737,7 +737,7 @@ let getAvailableActionTests =
                 
                 match newGameState with
                 | Ok(Drawing(gameState)) -> 
-                    Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
+                    Expect.equal gameState.TokenPositions.[BluePawn1] Start
                         "Expected blue pawn 1 to go back to start"
                 | _ -> failtest "Expected game to transition to draw state" 
             }
@@ -749,11 +749,11 @@ let getAvailableActionTests =
                    TokenPositions = [
                        GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
                        GreenPawn2, BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
-                       GreenPawn3, BoardPosition.Start(Color.Green)
+                       GreenPawn3, BoardPosition.Start
                        
-                       BluePawn1, BoardPosition.Start(Color.Blue)
-                       BluePawn2, BoardPosition.Start(Color.Blue)
-                       BluePawn3, BoardPosition.Start(Color.Blue)
+                       BluePawn1, BoardPosition.Start
+                       BluePawn2, BoardPosition.Start
+                       BluePawn3, BoardPosition.Start
                    ] |> Map.ofList
                    ActivePlayer = levi
                 }
@@ -783,7 +783,7 @@ let getAvailableActionTests =
                            
                            BluePawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Seven)
                            BluePawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.Fourteen)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                     }
@@ -803,7 +803,7 @@ let getAvailableActionTests =
                 test $"When another piece is in the slide 4 region it should get bumped back to start" {
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[BluePawn1] (Start(Color.Blue))
+                        Expect.equal gameState.TokenPositions.[BluePawn1] Start
                             "Expected blue pawn 1 to get bumped back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
@@ -811,7 +811,7 @@ let getAvailableActionTests =
                 test $"When your own piece is in the slide 4 region it should also get bumped back to start" {
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn3] (Start(Color.Green))
+                        Expect.equal gameState.TokenPositions.[GreenPawn3] Start
                             "Expected blue pawn 1 to get bumped back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
@@ -830,7 +830,7 @@ let getAvailableActionTests =
                 test $"When another piece is in the slide 3 region it should get bumped back to start" {
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[BluePawn2] (Start(Color.Blue))
+                        Expect.equal gameState.TokenPositions.[BluePawn2] Start
                             "Expected blue pawn 1 to get bumped back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
@@ -842,11 +842,11 @@ let getAvailableActionTests =
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Five)
                            GreenPawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Twelve)
-                           GreenPawn3, BoardPosition.Start(Color.Green)
+                           GreenPawn3, BoardPosition.Start
                            
                            BluePawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Seven)
                            BluePawn2, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Fourteen)
-                           BluePawn3, BoardPosition.Start(Color.Blue)
+                           BluePawn3, BoardPosition.Start
                        ] |> Map.ofList
                        ActivePlayer = levi
                     }
