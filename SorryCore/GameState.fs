@@ -82,23 +82,28 @@ let getAvailableColors game =
 let getTokenPositions game = 
     match game with
     | Drawing(gameState) -> Ok(gameState.TokenPositions)
+    | ChoosingAction(gameState) -> Ok(gameState.BoardState.TokenPositions)
     | SettingUp _ -> Error(game, "Game is still in setup state")
-    | _ -> Error(game, "Not implemented")
+    | GameOver _ -> Error(game, "Not implemented")
     
 let getPlayers game = 
     match game with
     | Drawing(gameState) -> Ok(gameState.Players)
+    | ChoosingAction(gameState) -> Ok(gameState.BoardState.Players)
     | SettingUp _ -> Error(game, "Game is still in setup state")
-    | _ -> Error(game, "Not implemented")
+    | GameOver _ -> Error(game, "Not implemented")
     
 let getActivePlayer game = 
     match game with
     | Drawing(gameState) -> Ok(gameState.ActivePlayer)
+    | ChoosingAction(gameState) -> Ok(gameState.BoardState.ActivePlayer)
     | SettingUp _ -> Error(game, "Game is still in setup state")
-    | _ -> Error(game, "Not implemented")
+    | GameOver _ -> Error(game, "Not implemented")
     
 let getAvailableActions game =
     match game with
+    | SettingUp _ -> Error(game, "Game is still in setup state")
+    | GameOver _ -> Error(game, "Not implemented")
     | Drawing _ -> Ok([Action.DrawCard])
     | ChoosingAction(game) ->
         let activeColor = game.BoardState.ActivePlayer.Color
@@ -198,8 +203,6 @@ let getAvailableActions game =
         | [] -> Ok([Action.PassTurn])
         | actions -> Ok(actions)
         
-    | SettingUp _ -> Error(game, "Game is still in setup state")
-    | _ -> Error(game, "Not implemented")
     
 let getDrawnCard game = 
     match game with
@@ -275,7 +278,7 @@ let tryChooseAction action game =
     let updateActivePlayer gameState =
        assert(gameState.Players |> List.contains gameState.ActivePlayer)
        let currentIndex = gameState.Players |> List.findIndex (fun player -> player = gameState.ActivePlayer)
-       let nextIndex = currentIndex + 1 % gameState.Players.Length
+       let nextIndex = (currentIndex + 1) % gameState.Players.Length
        {gameState with ActivePlayer=gameState.Players.[nextIndex]}
                          
     let sendPawnBackToStartIfOnPosition (position:BoardPosition) (tokenPositions:TokenPositions) =
