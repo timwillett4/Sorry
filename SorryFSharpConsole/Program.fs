@@ -52,17 +52,36 @@ let main argv =
             printfn "%A" <|error
             addPlayer game playerIndex
         
+    let rec getActionChoice readChar (maxActions:int) =
+        // @TODO - this is not going to work when there are more than 10 options
+        printf "Choose Action: "
+        match (readChar() |> int) - ('0' |> int) |> int with
+        | actionChoice when actionChoice >= 0 && actionChoice < maxActions -> actionChoice
+        | _ ->
+            deleteChar()
+            getActionChoice readChar maxActions
+        
     let game = [ 1..nPlayers ] |> List.fold addPlayer game
     
-    let r = result {
-        let! game = game |> GameState.tryStartGame (fun () -> Random(DateTime.Now.Millisecond).Next())
+    let game = game |> GameState.tryStartGame (fun () -> Random(DateTime.Now.Millisecond).Next())
+    
+    let rec gameLoop game = 
+        result {
+            
+            let! availableActions = game |> GameState.getAvailableActions
+            printBoardState game availableActions |> ignore
+            let actionChoice = getActionChoice readChar availableActions.Length
+            
+            let! game = game |> GameState.tryChooseAction availableActions.[actionChoice]
+            // @TODO - check win condition (match game state end on game over recurse on others?)
+            
+            return! gameLoop game
+    }
+    
+    let game = result {
+        let! game = game
         
-        // @TODO - game loop
-        let! game = game |> printBoardState
-        // @TODO - choose action
-        // @TODO - check win condition (match game state end on game over recurse on others?)
-        
-        return game
+        return! gameLoop game
     }
     
     0 // return an integer exit code 

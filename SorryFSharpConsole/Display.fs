@@ -110,11 +110,11 @@ let drawBoard tokenPositions =
     [0..15] |> List.iter (fun _ -> drawRow())
     [0..15] |> List.iter (fun _ -> drawBorder())
 
-let rec printBoardState game =
+let rec printBoardState game availableActions =
     
     let printTokenPosition tokenPosition =
        printfn "Board State:"
-       tokenPosition |> Map.iter (fun (pawn:Pawn) position -> printfn $"[%A{pawn.Color}] Token %A{id} is at board position: %A{position}")
+       tokenPosition |> Map.iter (fun (pawn:Pawn) position -> printfn $"[%A{pawn.Color}] Token %A{pawn.ID} is at board position: %A{position}")
        printfn ""
 
     let rec printActivePlayer activePlayer =
@@ -129,7 +129,7 @@ let rec printBoardState game =
         | None -> ()
         
     let printAvailableActions availableActions =
-        printfn "Avialable Actions:"
+        printfn "Available Actions:"
         availableActions
         |> List.iteri (fun i action -> printfn $"Action[%i{i}]: %A{action}")
         printfn ""
@@ -138,7 +138,6 @@ let rec printBoardState game =
         let! tokenPositions = game |> GameState.getTokenPositions
         let! activePlayer = game |> GameState.getActivePlayer
         let drawnCard = game |> GameState.getDrawnCard 
-        let! availableActions = game |> GameState.getAvailableActions
         
         tokenPositions |> printTokenPosition
         activePlayer |> printActivePlayer
