@@ -130,7 +130,7 @@ let getAvailableActions game =
             
         let canMoveAnyPieceOutOfStart = canMoveAnyPiece (fun position -> position = Start) 1
                                             
-        let canMoveAnyPieceNotOnStart = canMoveAnyPiece (fun position -> position <> Start)
+        let canMoveAnyPieceNotOnStartOrHome = canMoveAnyPiece (fun position -> position <> Start && position <> Home)
         
         let canSwitchPlacesWithOpponentNotOnStartHomeOrSafety =
             
@@ -187,16 +187,16 @@ let getAvailableActions game =
             |> List.map (fun ((pawn1, pawn2),(move1, move2)) -> SplitMove7((pawn1,move1),(pawn2,move2)))
 
         let actions = match game.DrawnCard with
-                      | Card.One ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 1)
-                      | Card.Two ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStart 2)
-                      | Card.Three -> canMoveAnyPieceNotOnStart 3
-                      | Card.Four -> canMoveAnyPieceNotOnStart -4
-                      | Card.Five -> canMoveAnyPieceNotOnStart 5
-                      | Card.Seven -> (canMoveAnyPieceNotOnStart 7)@canSplitMove7WithAny2PiecesNotOnStart
-                      | Card.Eight -> canMoveAnyPieceNotOnStart 8
-                      | Card.Ten -> (canMoveAnyPieceNotOnStart 10)@(canMoveAnyPieceNotOnStart -1)
-                      | Card.Eleven -> (canMoveAnyPieceNotOnStart 11)@canSwitchPlacesWithOpponentNotOnStartHomeOrSafety
-                      | Card.Twelve -> canMoveAnyPieceNotOnStart 12
+                      | Card.One ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStartOrHome 1)
+                      | Card.Two ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStartOrHome 2)
+                      | Card.Three -> canMoveAnyPieceNotOnStartOrHome 3
+                      | Card.Four -> canMoveAnyPieceNotOnStartOrHome -4
+                      | Card.Five -> canMoveAnyPieceNotOnStartOrHome 5
+                      | Card.Seven -> (canMoveAnyPieceNotOnStartOrHome 7)@canSplitMove7WithAny2PiecesNotOnStart
+                      | Card.Eight -> canMoveAnyPieceNotOnStartOrHome 8
+                      | Card.Ten -> (canMoveAnyPieceNotOnStartOrHome 10)@(canMoveAnyPieceNotOnStartOrHome -1)
+                      | Card.Eleven -> (canMoveAnyPieceNotOnStartOrHome 11)@canSwitchPlacesWithOpponentNotOnStartHomeOrSafety
+                      | Card.Twelve -> canMoveAnyPieceNotOnStartOrHome 12
                       | Card.Sorry -> canMoveAnyPieceOnStartToBumpAnyPieceNotOnStartHomeOrSafety
                       
         match actions with

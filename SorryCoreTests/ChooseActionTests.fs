@@ -412,6 +412,9 @@ let getAvailableActionTests =
                             "Expected pawn 2 to be moved forward 6 spaces to red 7"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
+                
+                // 7 can not move on home
+                // Must be able to play both parts of split
             ]
             
             testList "Card 10 movement Tests" [
@@ -616,9 +619,35 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                     
                 }
-                // @TODO - 11 Special Rules:
-                // @TODO -     Allowed to pass instead of use switch if you can't move 11
                 
+                test "11 has option to pass turn when on safety row" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           RandomNumberGenerator = fun () -> 0
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               // Yellow 14 = 1 away from safety square
+                               GreenPawn1, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Fourteen)
+                               GreenPawn2, BoardPosition.Home
+                               GreenPawn3, BoardPosition.Home
+                               
+                               BluePawn1, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                               BluePawn2, BoardPosition.Start
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                    }
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eleven }
+                    let expectedActions = [SwitchPawns(GreenPawn1, BluePawn1); Action.PassTurn]
+                    
+                    let availableActions = gameState |> GameState.getAvailableActions 
+                    
+                    match availableActions with
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected active player to ether switch or pass turn"
+                    | Error _ -> failtest "Unexpected error"
+                }
             ]
             
             testList "Card 'Sorry' movement tests" [
@@ -896,24 +925,24 @@ let getAvailableActionTests =
             
             testList "Home and safety tests" [
                 
-                let boardState = {
-                       Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
-                       Players = [levi;dad]
-                       TokenPositions = [
-                           // Yellow 14 = 1 away from safety square
-                           GreenPawn1, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Fourteen)
-                           GreenPawn2, BoardPosition.Start
-                           GreenPawn3, BoardPosition.Start
-                           
-                           BluePawn1, BoardPosition.Start
-                           BluePawn2, BoardPosition.Start
-                           BluePawn3, BoardPosition.Start
-                       ] |> Map.ofList
-                       ActivePlayer = levi
-                    }
-                
                 test "Token should move to safety row after reaching square in front of safety row" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           RandomNumberGenerator = fun () -> 0
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               // Yellow 14 = 1 away from safety square
+                               GreenPawn1, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Fourteen)
+                               GreenPawn2, BoardPosition.Start
+                               GreenPawn3, BoardPosition.Start
+                               
+                               BluePawn1, BoardPosition.Start
+                               BluePawn2, BoardPosition.Start
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                        }
                     
                     let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
                     let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn1, 1))
@@ -924,9 +953,150 @@ let getAvailableActionTests =
                             "Expected blue pawn 2 to move into first square of safety row"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
-            // @TODO - test for getting home
-            // @TODO - test for backwards from safety
-            // @TODO - test for game over
+                
+                test "Can not move pawn if it is on home" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           RandomNumberGenerator = fun () -> 0
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               // Yellow 14 = 1 away from safety square
+                               GreenPawn1, BoardPosition.Home
+                               GreenPawn2, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                               GreenPawn3, BoardPosition.Outer(Color.Blue, OuterCoordinate.One)
+                               
+                               BluePawn1, BoardPosition.Start
+                               BluePawn2, BoardPosition.Start
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                    }
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+                    let availableActions = gameState |> GameState.getAvailableActions 
+                    let expectedActions = [MovePawn(GreenPawn2, 1); MovePawn(GreenPawn3, 1)];
+                    
+                    match availableActions with
+                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to only be able to move pawns not on home"
+                    | Error _ -> failtest "Unexpected error"
+                }
+                
+                test "Must get exact count to get home" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           RandomNumberGenerator = fun () -> 0
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               // Yellow 14 = 1 away from safety square
+                               GreenPawn1, BoardPosition.Safety(SafetySquare.Five)
+                               GreenPawn2, BoardPosition.Home
+                               GreenPawn3, BoardPosition.Home
+                               
+                               BluePawn1, BoardPosition.Start
+                               BluePawn2, BoardPosition.Start
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                    }
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eight }
+                    
+                    let availableActions = gameState |> GameState.getAvailableActions 
+                    
+                    match availableActions with
+                    | Ok(actions) -> Expect.equal actions [Action.PassTurn] "Expected only move to be pass turn"
+                    | Error _ -> failtest "Unexpected error"
+                }
+                
+                test "Can not move a piece backwards from home" {
+                     
+                     let boardState = {
+                            Deck = newDeck
+                            RandomNumberGenerator = fun () -> 0
+                            Players = [levi;dad]
+                            TokenPositions = [
+                                // Yellow 14 = 1 away from safety square
+                                GreenPawn1, BoardPosition.Safety(SafetySquare.Five)
+                                GreenPawn2, BoardPosition.Home
+                                GreenPawn3, BoardPosition.Home
+                                
+                                BluePawn1, BoardPosition.Start
+                                BluePawn2, BoardPosition.Start
+                                BluePawn3, BoardPosition.Start
+                            ] |> Map.ofList
+                            ActivePlayer = levi
+                     }
+                     
+                     let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eight }
+                     
+                     let availableActions = gameState |> GameState.getAvailableActions 
+                     
+                     match availableActions with
+                     | Ok(actions) -> Expect.equal actions [Action.PassTurn] "Expected only move to be pass turn"
+                     | Error _ -> failtest "Unexpected error"
+                 }
+                 
+                test "Game should transition to game over state when a player gets all pieces home" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           RandomNumberGenerator = fun () -> 0
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               // Yellow 14 = 1 away from safety square
+                               GreenPawn1, BoardPosition.Safety(SafetySquare.Five)
+                               GreenPawn2, BoardPosition.Home
+                               GreenPawn3, BoardPosition.Home
+                               
+                               BluePawn1, BoardPosition.Start
+                               BluePawn2, BoardPosition.Start
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                    }
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eight }
+                    
+                    let availableActions = gameState |> GameState.getAvailableActions 
+                    
+                    match availableActions with
+                    | Ok(actions) -> Expect.equal actions [Action.PassTurn] "Expected only move to be pass turn"
+                    | Error _ -> failtest "Unexpected error"
+                }
+                
+                test "Game should transition to game over state when a player gets all pieces home" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           RandomNumberGenerator = fun () -> 0
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               // Yellow 14 = 1 away from safety square
+                               GreenPawn1, BoardPosition.Safety(SafetySquare.Five)
+                               GreenPawn2, BoardPosition.Home
+                               GreenPawn3, BoardPosition.Home
+                               
+                               BluePawn1, BoardPosition.Start
+                               BluePawn2, BoardPosition.Start
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                    }
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+                    
+                    let newGameState = gameState |> GameState.tryChooseAction(MovePawn(GreenPawn1, 1)) 
+                    
+                    match newGameState with
+                    | Ok(GameOver(gameState)) ->
+                        Expect.equal gameState.Winner levi "Expected game to transition to game over with levi as winner"
+                    | _ -> failtest "Expected game to transition to game over state"
+                }
+            // Can't move a piece backwards from home
+            //@TODO - reshuffle deck when cards are empty
         ]
+           
     ]
 ]
