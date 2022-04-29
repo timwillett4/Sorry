@@ -894,9 +894,39 @@ let getAvailableActionTests =
                 }
             ]
             
-            // @TODO - test for can't move
+            testList "Home and safety tests" [
+                
+                let boardState = {
+                       Deck = newDeck
+                       RandomNumberGenerator = fun () -> 0
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           // Yellow 14 = 1 away from safety square
+                           GreenPawn1, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Fourteen)
+                           GreenPawn2, BoardPosition.Start
+                           GreenPawn3, BoardPosition.Start
+                           
+                           BluePawn1, BoardPosition.Start
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                    }
+                
+                test "Token should move to safety row after reaching square in front of safety row" {
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+                    let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn1, 1))
+                    
+                    match newGameState with
+                    | Ok(Drawing(gameState)) -> 
+                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Safety(SafetySquare.One))
+                            "Expected blue pawn 2 to move into first square of safety row"
+                    | _ -> failtest "Expected game to transition to draw state" 
+                }
             // @TODO - test for getting home
             // @TODO - test for backwards from safety
             // @TODO - test for game over
         ]
     ]
+]

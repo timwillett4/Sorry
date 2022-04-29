@@ -48,7 +48,7 @@ let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
 
     let toBoardPosition localPosition =
         match localPosition with
-        | _ when localPosition >= 1 && localPosition <= 60 ->
+        | _ when localPosition >= 1 && localPosition < 60 ->
             let colorDiff = localPosition / nSpacePerColor
             let outerCoord = localPosition - (colorDiff * nSpacePerColor)
             let color = ((localColor |> int) + colorDiff) % nColors |> enum<Color>
