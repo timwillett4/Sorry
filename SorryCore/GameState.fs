@@ -257,23 +257,23 @@ let tryStartGame random game =
                 
             let tokenPositions = initializeTokenPositions setupState.Players
             
-            Ok(Drawing({Deck=newDeck;RandomNumberGenerator=random;Players=setupState.Players;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[activePlayer]}))
+            Ok(Drawing({Deck=newDeck;Players=setupState.Players;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[activePlayer]}))
             
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only start a game that is still in setup state")
                  
-let tryDrawCard game =
+let tryDrawCard random game =
     match game with
     | Drawing(gameState) ->
         // for simplicity sake, rather than shuffle deck, draw random card each time
-        let drawIndex = gameState.RandomNumberGenerator() % gameState.Deck.Length
+        let drawIndex = random() % gameState.Deck.Length
         let topCut, bottomCut = gameState.Deck |> List.splitAt drawIndex
         let drawnCard = bottomCut.Head
         let newDeck = topCut @ bottomCut.Tail
         Ok(ChoosingAction({BoardState={gameState with Deck=newDeck};DrawnCard=drawnCard}))
     | _ -> Error(game, "Can only draw a card when game is in draw state")
 
-let tryChooseAction action game =
+let tryChooseAction random action game =
     
     let updateActivePlayer gameState =
        assert(gameState.Players |> List.contains gameState.ActivePlayer)
@@ -362,7 +362,7 @@ let tryChooseAction action game =
             return! match game with
                     | Drawing(_) ->
                         match action with
-                        | DrawCard -> game |> tryDrawCard
+                        | DrawCard -> game |> tryDrawCard random
                         | _ -> Error(game, "Can only draw card when game is in draw state")
                     | ChoosingAction(gameState) ->
                         match action with

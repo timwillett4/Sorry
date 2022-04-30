@@ -63,7 +63,9 @@ let main argv =
         
     let game = [ 1..nPlayers ] |> List.fold addPlayer game
     
-    let game = game |> GameState.tryStartGame (fun () -> Random(DateTime.Now.Millisecond).Next())
+    let random = fun () -> Random(DateTime.Now.Millisecond).Next()
+    
+    let game = game |> GameState.tryStartGame random
     
     let rec gameLoop game = 
         result {
@@ -72,7 +74,7 @@ let main argv =
             printBoardState game availableActions |> ignore
             let actionChoice = getActionChoice readChar availableActions.Length
             
-            let! game = game |> GameState.tryChooseAction availableActions.[actionChoice]
+            let! game = game |> GameState.tryChooseAction random availableActions.[actionChoice]
             // @TODO - check win condition (match game state end on game over recurse on others?)
             
             return! gameLoop game

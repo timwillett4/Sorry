@@ -178,9 +178,9 @@ type SetupState = {
 }
 
 /// The DrawState is when a player is currently up to draw a card
+
 type BoardState = {
     Deck : Deck
-    RandomNumberGenerator : unit -> int
     Players : Player list
     TokenPositions : TokenPositions
     ActivePlayer : Player

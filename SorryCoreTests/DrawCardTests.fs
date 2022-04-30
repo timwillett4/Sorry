@@ -29,7 +29,7 @@ let drawCardTests =
                 let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
                 let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
                 let! game = game |> GameState.tryStartGame random0
-                let! game = game |> GameState.tryDrawCard
+                let! game = game |> GameState.tryDrawCard random0
                 
                 return game |> GameState.getDrawnCard
             }

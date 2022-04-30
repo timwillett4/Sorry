@@ -6,6 +6,9 @@ open Expecto
 [<Tests>]
 let getAvailableActionTests =
     
+    let random0 = fun () -> 0
+    let tryChooseAction = GameState.tryChooseAction random0
+    
     testList "Choose action tests" [
         let levi = {Name="Levi"; Color=Color.Green}
         let dad = {Name="Dad"; Color=Color.Blue}
@@ -28,7 +31,6 @@ let getAvailableActionTests =
         
         let initialBoardState = {
                Deck = newDeck
-               RandomNumberGenerator = fun () -> 0
                Players = [levi;dad]
                TokenPositions = [
                    GreenPawn1, Start
@@ -56,11 +58,11 @@ let getAvailableActionTests =
             }
             
             test "Choosing move pawn action for an initially created game should be a invalid action" {
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(BluePawn1, 3))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(BluePawn1, 3))
                 Expect.isError newGameState "Expect move pawn to be an invalid action"
             }
             
-            let newGameState = gameState |> GameState.tryChooseAction Action.DrawCard
+            let newGameState = gameState |> tryChooseAction Action.DrawCard
             
             test "Choosing draw card action for an initially created game should be a valid action" {
                 Expect.isOk newGameState "Expect drawing card to be a valid action"
@@ -86,12 +88,12 @@ let getAvailableActionTests =
                     
                 $"When a %A{card} card is drawn, moving Pawn 1 by 1 should be a valid move",
                 fun initialGameState () ->
-                    let newGameState = initialGameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                    let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
                     Expect.isOk newGameState "Expected moving pawn one 1 space to be a valid action"
                     
                 $"When a %A{card} card is drawn, moving Pawn 1 by 1 should update the board positions",
                 fun initialGameState () ->
-                    let newGameState = initialGameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                    let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
                     match newGameState with
                     | Ok(Drawing(gameState)) ->
                         Expect.equal
@@ -102,7 +104,7 @@ let getAvailableActionTests =
                     
                 $"When a %A{card} card is drawn, PassTurn should be an invalid move",
                 fun initialGameState () ->
-                    let newGameState = initialGameState |> GameState.tryChooseAction Action.PassTurn
+                    let newGameState = initialGameState |> tryChooseAction Action.PassTurn
                     Expect.isError newGameState "Expected pass turn to be an invalid move"
             ]
         )
@@ -111,7 +113,7 @@ let getAvailableActionTests =
         
         test "When one is drawn moving from start should change active player" {
             let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = Card.One }
-            let newGameState = initialGameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+            let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
             match newGameState with
             | Ok(Drawing(gameState)) ->Expect.equal gameState.ActivePlayer dad "Expected turn to move to next player"
             | _ -> failtest "Expected game to transition to drawState"         
@@ -119,7 +121,7 @@ let getAvailableActionTests =
         
         test "When two is drawn moving from start should not change active player (player gets to draw again)" {
             let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = Card.Two }
-            let newGameState = initialGameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+            let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
             match newGameState with
             | Ok(Drawing(gameState)) ->Expect.equal gameState.ActivePlayer levi "Expected active player to get another turn"
             | _ -> failtest "Expected game to transition to drawState"         
@@ -139,7 +141,7 @@ let getAvailableActionTests =
                     
                  $"When all pieces are in home squares and a %A{card} is drawn, choosing pass turn action should change the active player",
                  fun initialGameState () ->
-                        let newGameState = initialGameState |> GameState.tryChooseAction Action.PassTurn
+                        let newGameState = initialGameState |> tryChooseAction Action.PassTurn
                         match newGameState with
                         | Ok(Drawing(gameState)) ->
                             Expect.equal gameState.ActivePlayer dad "Expected turn to move to next player"
@@ -147,7 +149,7 @@ let getAvailableActionTests =
                         
                  $"When all pieces are in home squares and a %A{card} is drawn, choosing pass turn action should not change the token positions",
                  fun initialGameState () ->
-                        let newGameState = initialGameState |> GameState.tryChooseAction Action.PassTurn
+                        let newGameState = initialGameState |> tryChooseAction Action.PassTurn
                         match (newGameState,initialGameState) with
                         | Ok(Drawing(newGameState)),ChoosingAction(initialGameState) ->
                             Expect.equal initialGameState.BoardState.TokenPositions newGameState.TokenPositions "Expected token positions to not change"
@@ -155,7 +157,7 @@ let getAvailableActionTests =
                         
                  $"When all pieces are in home squares and a %A{card} is drawn, moving a pawn should be an invalid move",
                  fun initialGameState () ->
-                    let newGameState = initialGameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                    let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
                     Expect.isError newGameState "Expected moving pawn to be an invalid move"
             ]        
         )
@@ -178,7 +180,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Two)
@@ -208,14 +209,14 @@ let getAvailableActionTests =
                         | Error _ -> failtest "Unexpected Error"
                     $"Expect token position to be updated when moving by %A{card}",
                     fun gameState () ->
-                        let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
+                        let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
                         match newGameState with
                         | Ok(Drawing(gameState)) ->
                             Expect.equal gameState.TokenPositions.[GreenPawn1] expectedMoveSquare $"Expected pawn 1 to be moved %i{expectedMove} space to %A{expectedMoveSquare}"
                         | _ -> failtest "Expected game to transition to draw state"
                     $"Expect active player to be updated",
                     fun gameState () ->
-                        let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
+                        let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
                         match newGameState with
                         | Ok(Drawing(gameState)) -> 
                             Expect.equal gameState.ActivePlayer dad "Expected active player to switch to dad"
@@ -232,7 +233,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -260,7 +260,7 @@ let getAvailableActionTests =
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 2))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 2))
                 
                 test $"Expect token positions to be updated when moving by 2" {
                     match newGameState with
@@ -281,7 +281,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -309,7 +308,7 @@ let getAvailableActionTests =
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn2, -4))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn2, -4))
                 
                 test $"Expect token position to be updated when moving backwards 4" {
                     
@@ -328,7 +327,7 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, -4))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, -4))
                 
                 test $"Expect token to wrap behind first square moving backwards 4 from opening square" {
                     match newGameState with
@@ -343,7 +342,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -376,7 +374,7 @@ let getAvailableActionTests =
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 7))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 7))
                 
                 test $"Expect token position to be updated when moving pawn forward 7" {
                     
@@ -395,7 +393,7 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.SplitMove7((GreenPawn1, 1),(GreenPawn2,6)))
+                let newGameState = gameState |> tryChooseAction (Action.SplitMove7((GreenPawn1, 1),(GreenPawn2,6)))
                 
                 test $"Expect token 1 to be move forward 1 when splitting move 7 and moving pawn 1 forward 1" {
                     match newGameState with
@@ -421,7 +419,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -452,7 +449,7 @@ let getAvailableActionTests =
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn2, 10))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn2, 10))
                 
                 test $"Expect token position to be updated when moving forwards 10" {
                     
@@ -471,7 +468,7 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, -1))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, -1))
                 
                 test $"Expect token to wrap behind first square moving backwards 1 space from opening square" {
                     match newGameState with
@@ -486,7 +483,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -518,7 +514,7 @@ let getAvailableActionTests =
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 11))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 11))
                 
                 test $"Expect token position to be updated when moving forwards 11" {
                     
@@ -537,7 +533,7 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
+                let newGameState = gameState |> tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
                 
                 test $"Expect green pawn 1 to move to position where blue pawn 1 was" {
                     match newGameState with
@@ -557,7 +553,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -594,7 +589,6 @@ let getAvailableActionTests =
                 test $"If you switch with a player on a boost square, you should boost to end of slide region" {
                     let boardState = {
                            Deck = newDeck
-                           RandomNumberGenerator = fun () -> 0
                            Players = [levi;dad]
                            TokenPositions = [
                                GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -610,7 +604,7 @@ let getAvailableActionTests =
                     
                     let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eleven }
                     
-                    let newGameState = gameState |> GameState.tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
+                    let newGameState = gameState |> tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
                     
                     match newGameState with
                     | Ok(Drawing(gameState)) -> 
@@ -624,7 +618,6 @@ let getAvailableActionTests =
                     
                     let boardState = {
                            Deck = newDeck
-                           RandomNumberGenerator = fun () -> 0
                            Players = [levi;dad]
                            TokenPositions = [
                                // Yellow 14 = 1 away from safety square
@@ -654,7 +647,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Start
@@ -685,7 +677,7 @@ let getAvailableActionTests =
                     | Error _ -> failtest "Unexpected Error" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (Action.Sorry(GreenPawn1, BluePawn1))
+                let newGameState = gameState |> tryChooseAction (Action.Sorry(GreenPawn1, BluePawn1))
                 
                 test $"Expect green pawn 1 to move to square where blue pawn 1 was" {
                     
@@ -715,7 +707,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Start
@@ -744,7 +735,6 @@ let getAvailableActionTests =
             
             let boardState = {
                    Deck = newDeck
-                   RandomNumberGenerator = fun () -> 0
                    Players = [levi;dad]
                    TokenPositions = [
                        GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -762,7 +752,7 @@ let getAvailableActionTests =
             
             
             test $"When you land on your opponents space there piece should be sent back to home" {
-                let newGameState = gameState |> GameState.tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
                 
                 match newGameState with
                 | Ok(Drawing(gameState)) -> 
@@ -773,7 +763,6 @@ let getAvailableActionTests =
         
             let boardState = {
                    Deck = newDeck
-                   RandomNumberGenerator = fun () -> 0
                    Players = [levi;dad]
                    TokenPositions = [
                        GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
@@ -803,7 +792,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Five)
@@ -819,7 +807,7 @@ let getAvailableActionTests =
                 
                 let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn1, 1))
+                let newGameState = gameState |> tryChooseAction (MovePawn(GreenPawn1, 1))
                 
                 test $"When you land on a slide triangle on square 6, you piece should move an additional 4 spacs to the end of the slide region" {
                     match newGameState with
@@ -845,7 +833,7 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn2, 1))
+                let newGameState = gameState |> tryChooseAction (MovePawn(GreenPawn2, 1))
                 
                 test $"When you land on a slide triangle on square 13, you piece should move an additional 3 spaces to the end of the slide region" {
                     
@@ -866,7 +854,6 @@ let getAvailableActionTests =
                 
                 let boardState = {
                        Deck = newDeck
-                       RandomNumberGenerator = fun () -> 0
                        Players = [levi;dad]
                        TokenPositions = [
                            GreenPawn1, BoardPosition.Outer(Color.Green, OuterCoordinate.Five)
@@ -882,7 +869,7 @@ let getAvailableActionTests =
                 
                 let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn1, 1))
+                let newGameState = gameState |> tryChooseAction (MovePawn(GreenPawn1, 1))
                 
                 test $"You should not slide when you land on your own slide 4 square" {
                     
@@ -902,7 +889,7 @@ let getAvailableActionTests =
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
                 
-                let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn2, 1))
+                let newGameState = gameState |> tryChooseAction (MovePawn(GreenPawn2, 1))
                 
                 // your own slide 3 square is on the previous colors outer 13 square
                 test $"You should not slide when you land on your own slide 3 square" {
@@ -929,36 +916,6 @@ let getAvailableActionTests =
                     
                     let boardState = {
                            Deck = newDeck
-                           RandomNumberGenerator = fun () -> 0
-                           Players = [levi;dad]
-                           TokenPositions = [
-                               // Yellow 14 = 1 away from safety square
-                               GreenPawn1, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Fourteen)
-                               GreenPawn2, BoardPosition.Start
-                               GreenPawn3, BoardPosition.Start
-                               
-                               BluePawn1, BoardPosition.Start
-                               BluePawn2, BoardPosition.Start
-                               BluePawn3, BoardPosition.Start
-                           ] |> Map.ofList
-                           ActivePlayer = levi
-                        }
-                    
-                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
-                    let newGameState = gameState |> GameState.tryChooseAction (MovePawn(GreenPawn1, 1))
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Safety(SafetySquare.One))
-                            "Expected blue pawn 2 to move into first square of safety row"
-                    | _ -> failtest "Expected game to transition to draw state" 
-                }
-                
-                test "Can not move pawn if it is on home" {
-                    
-                    let boardState = {
-                           Deck = newDeck
-                           RandomNumberGenerator = fun () -> 0
                            Players = [levi;dad]
                            TokenPositions = [
                                // Yellow 14 = 1 away from safety square
@@ -986,7 +943,6 @@ let getAvailableActionTests =
                     
                     let boardState = {
                            Deck = newDeck
-                           RandomNumberGenerator = fun () -> 0
                            Players = [levi;dad]
                            TokenPositions = [
                                // Yellow 14 = 1 away from safety square
@@ -1014,7 +970,6 @@ let getAvailableActionTests =
                      
                      let boardState = {
                             Deck = newDeck
-                            RandomNumberGenerator = fun () -> 0
                             Players = [levi;dad]
                             TokenPositions = [
                                 // Yellow 14 = 1 away from safety square
@@ -1042,7 +997,6 @@ let getAvailableActionTests =
                     
                     let boardState = {
                            Deck = newDeck
-                           RandomNumberGenerator = fun () -> 0
                            Players = [levi;dad]
                            TokenPositions = [
                                // Yellow 14 = 1 away from safety square
@@ -1070,7 +1024,6 @@ let getAvailableActionTests =
                     
                     let boardState = {
                            Deck = newDeck
-                           RandomNumberGenerator = fun () -> 0
                            Players = [levi;dad]
                            TokenPositions = [
                                // Yellow 14 = 1 away from safety square
@@ -1087,7 +1040,7 @@ let getAvailableActionTests =
                     
                     let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
                     
-                    let newGameState = gameState |> GameState.tryChooseAction(MovePawn(GreenPawn1, 1)) 
+                    let newGameState = gameState |> tryChooseAction (MovePawn(GreenPawn1, 1)) 
                     
                     match newGameState with
                     | Ok(GameOver(gameState)) ->
