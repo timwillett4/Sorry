@@ -5,39 +5,33 @@ open FSharp.Core.Extensions.Result
 open Expecto
 
 [<Tests>]
-let startGameTests =  
+let startGameTests =
+    
+    let levi = {Color=Color.Green; Name = "Levi"}
+    let corbin = {Color=Color.Yellow; Name = "Corbin"}
+    let micah = {Color=Color.Blue; Name = "Micah"}
+    let barrett = {Color=Color.Red; Name = "Barrett"}
+    
+    let random1 = fun () -> 1
+    let tryStartGame = GameState.tryStartGame random1
+    
     testList "Start Game Tests" [
         
         test "Starting a game when a game is in the game over state should return an error" {
-            let gameState = result {
-                let game = GameOver({Winner={Name="Levi";Color=Color.Red}})
-                let! game = game |> GameState.tryStartGame (fun () -> 1)
-                return game
-            }
-                
+            let gameState = GameOver({Winner=levi}) |> tryStartGame
+            
             Expect.isError gameState "Expect error to be returned starting a game that is not in setting up state"
         }
         
         test "Starting a game with only 1 player should return an error" {
             
-            let gameState = result {
-                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.tryStartGame (fun () -> 1)
-                return game
-            }
+            let gameState = SettingUp({Players = [levi]}) |> tryStartGame
                 
             Expect.isError gameState "Expect error to be returned when a game is started with only 1 player"
         }
         
-        
         test "Starting a game with 2 or more players should transition the game to draw state" {
-            let gameState = result {
-                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.tryStartGame (fun () -> 1)
-                
-                return game
-            }
+            let gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
             
             match gameState with
             | Ok(Drawing _) -> ()
@@ -46,70 +40,51 @@ let startGameTests =
         
         test "A new game should have 45 cards in the deck" {
             let numCardsInDeck = result {
-                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.tryStartGame (fun () -> 1)
+                let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
                 
-                let numCards =
-                    match game with
-                    | Drawing gameState -> Ok gameState.Deck.Length
-                    | _ -> Error (game, "Expected game to transition to draw state")
-                    
-                return! numCards
+                return! match gameState with
+                        | Drawing gameState -> Ok gameState.Deck.Length
+                        | _ -> Error (gameState, "Expected game to transition to draw state")
             }
             
-            match numCardsInDeck with
-            | Ok(numCardsInDeck) -> Expect.equal numCardsInDeck 45 "Expected game to contain 45 cards"
-            | Error(e, _) -> failtest $"Unexpected error: {e}"
+            Expect.equal numCardsInDeck (Ok(45)) "Expected game to contain 45 cards"
         }
         
         test "There should be 3 tokens of each color" {
-            let num = result {
-                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.tryStartGame (fun () -> 1)
-                let! tokens = game |> GameState.getTokenPositions
+            let are3ofEachColor = result {
+                let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
+                let! tokens = gameState |> GameState.getTokenPositions
                 
                 let countColor color game =
                     game
-                    |> Map.filter (fun (pawn:Pawn) position -> pawn.Color = color)
+                    |> Map.filter (fun (pawn:Pawn) _ -> pawn.Color = color)
                     |> Map.count 
                 
-                return (tokens |> countColor Color.Red), (tokens |> countColor Color.Yellow)
+                return (tokens |> countColor Color.Green) = 3 && (tokens |> countColor Color.Yellow) = 3
             }
             
-            match num with
-            | Ok(numberOfRed, numberOfYellow) -> Expect.equal (numberOfRed, numberOfYellow) (3, 3) "Expected 3 of each color"
-            | Error(e, _) -> failtest $"Unexpected error: {e}"
+            Expect.equal are3ofEachColor (Ok(true)) "Expected 3 of each color"
         }
         
         test "All pieces should start on their start square" {
             let allPiecesOnHomeSquare = result {
-                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.tryStartGame (fun () -> 1)
-                let! tokens = game |> GameState.getTokenPositions
+                let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
+                let! tokens = gameState |> GameState.getTokenPositions
                     
                 return tokens |> Map.forall (fun _ position -> position = BoardPosition.Start)
             }
             
-            match allPiecesOnHomeSquare with
-            | Ok(onHomeSquare) -> Expect.isTrue onHomeSquare "Expected all pieces to start on their start square"
-            | Error(e, _) -> failtest $"Unexpected error: {e}"
-        }
+            Expect.equal allPiecesOnHomeSquare (Ok(true)) "Expected all pieces to start on their start square"
+        } 
         
         test "When a game is started, the players list should match those added in setup state" {
             let players = result {
-                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.tryStartGame (fun () -> 1)
+                let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
                 
-                return! game |> GameState.getPlayers
+                return! gameState |> GameState.getPlayers
             }
             
-            match players with
-            | Ok(players) -> Expect.equal players [{Name="Levi";Color=Color.Red};{Name="Tim";Color=Color.Yellow}] "Expected players list to match those added in setup state"
-            | Error(e, _) -> failtest $"Unexpected error: {e}"
+            Expect.equal players (Ok([levi;corbin])) "Expected players list to match those added in setup state"
         }
         
         test "When a game is started, the active player should be chosen according to the random number method" {
@@ -118,11 +93,11 @@ let startGameTests =
             let fakeRandomNumberGenerator2() = 2
             
             let activePlayers = result {
-                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game1 = game |> GameState.tryStartGame fakeRandomNumberGenerator0
-                let! game2 = game |> GameState.tryStartGame fakeRandomNumberGenerator1
-                let! game3 = game |> GameState.tryStartGame fakeRandomNumberGenerator2
+                let gameSetup = SettingUp({Players = [levi;corbin;micah]})
+                
+                let! game1 = gameSetup |> GameState.tryStartGame fakeRandomNumberGenerator0
+                let! game2 = gameSetup |> GameState.tryStartGame fakeRandomNumberGenerator1
+                let! game3 = gameSetup |> GameState.tryStartGame fakeRandomNumberGenerator2
                 
                 let! activePlayer1 = game1 |> GameState.getActivePlayer
                 let! activePlayer2 = game2 |> GameState.getActivePlayer
@@ -131,26 +106,16 @@ let startGameTests =
                 return [activePlayer1;activePlayer2;activePlayer3]
             }
             
-            let levi = {Name="Levi";Color=Color.Red}
-            let tim = {Name="Tim";Color=Color.Yellow}
-            
-            match activePlayers with
-            | Ok(activePlayers) -> Expect.equal activePlayers [levi;tim;levi] "Expected active player to be chosen by random number"
-            | Error(e, _) -> failtest $"Unexpected error: {e}"
+            Expect.equal activePlayers (Ok([levi;corbin;micah])) "Expected active player to be chosen by random number"
         }
         
         test "The only action for a newly created game should be 'draw card'" {
             let availableActions = result {
-                let! game = GameState.newGame |> GameState.tryAddPlayer "Levi" Color.Red
-                let! game = game |> GameState.tryAddPlayer "Tim" Color.Yellow
-                let! game = game |> GameState.tryStartGame (fun () -> 0)
-                
-                return! game |> GameState.getAvailableActions
+                let! gameState = SettingUp({Players = [levi;corbin;micah]}) |> tryStartGame
+                return! gameState |> GameState.getAvailableActions
             }
             
-            match availableActions with
-            | Ok(actions) -> Expect.equal actions [Action.DrawCard] "Expected available action to be single action of draw card"
-            | Error(e, _) -> failtest $"Unexpected error: {e}"
+            Expect.equal availableActions (Ok([Action.DrawCard])) "Expected available action to be single action of draw card"
         }
     ]
     
