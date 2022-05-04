@@ -1,7 +1,8 @@
 ﻿module SorryCoreTests.ChooseActionsTests
 
-open Sorry.Core
 open Expecto
+open FSharp.Core.Extensions.Result
+open Sorry.Core
 
 [<Tests>]
 let getAvailableActionTests =
@@ -16,14 +17,6 @@ let getAvailableActionTests =
         let GreenPawn1 = {Color=Color.Green;ID=PawnID.One}
         let GreenPawn2 = {Color=Color.Green;ID=PawnID.Two}
         let GreenPawn3 = {Color=Color.Green;ID=PawnID.Three}
-
-        let RedPawn1 = {Color=Color.Red;ID=PawnID.One}
-        let RedPawn2 = {Color=Color.Red;ID=PawnID.Two}
-        let RedPawn3 = {Color=Color.Red;ID=PawnID.Three}
-
-        let YellowPawn1 = {Color=Color.Yellow;ID=PawnID.One}
-        let YellowPawn2 = {Color=Color.Yellow;ID=PawnID.Two}
-        let YellowPawn3 = {Color=Color.Yellow;ID=PawnID.Three}
 
         let BluePawn1 = {Color=Color.Blue;ID=PawnID.One}
         let BluePawn2 = {Color=Color.Blue;ID=PawnID.Two}
@@ -52,9 +45,7 @@ let getAvailableActionTests =
                 
                 let availableActions = gameState |> GameState.getAvailableActions
                 
-                match availableActions with
-                | Ok(actions) -> Expect.equal actions [Action.DrawCard] "Expected single available action of draw card"
-                | Error _ -> failtest "Unexpected error"
+                Expect.equal availableActions (Ok([Action.DrawCard])) "Expected single available action of draw card"
             }
             
             test "Choosing move pawn action for an initially created game should be a invalid action" {
@@ -75,32 +66,28 @@ let getAvailableActionTests =
                 $"When a %A{card} card is drawn, you should be allowed to move any piece from the start square",
                 fun initialGameState () ->
                     let expectedActions = [
-                            Action.MovePawn(GreenPawn1, 1)
-                            Action.MovePawn(GreenPawn2, 1)
-                            Action.MovePawn(GreenPawn3, 1)
+                        Action.MovePawn(GreenPawn1, 1)
+                        Action.MovePawn(GreenPawn2, 1)
+                        Action.MovePawn(GreenPawn3, 1)
                     ]
-                        
                     let availableActions = initialGameState |> GameState.getAvailableActions
-                        
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece from the starting position"
-                    | Error _ -> failtest "Unexpected error"
+                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece from the starting position"
                     
                 $"When a %A{card} card is drawn, moving Pawn 1 by 1 should be a valid move",
                 fun initialGameState () ->
                     let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
                     Expect.isOk newGameState "Expected moving pawn one 1 space to be a valid action"
                     
-                $"When a %A{card} card is drawn, moving Pawn 1 by 1 should update the board positions",
+                $"When a %A{card} card is drawn, moving Green Pawn 1 by 1 should move it to Outer square Green 1",
                 fun initialGameState () ->
-                    let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
-                    match newGameState with
-                    | Ok(Drawing(gameState)) ->
-                        Expect.equal
-                            gameState.TokenPositions.[GreenPawn1]
-                            (BoardPosition.Outer(Color.Green, OuterCoordinate.One))
-                            "Expected token one to be moved out of start space"
-                    | _ -> failtest "Expected game to transition to drawState"
+                    let greenPawn1Pos = result {
+                        let! gameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                        let! tokenPositions = gameState |> GameState.getTokenPositions
+                        
+                        return tokenPositions.[GreenPawn1]
+                    } 
+                    Expect.equal greenPawn1Pos (Ok(BoardPosition.Outer(Color.Green, OuterCoordinate.One)))
+                        "Expected token one to be moved out of start space"
                     
                 $"When a %A{card} card is drawn, PassTurn should be an invalid move",
                 fun initialGameState () ->
@@ -111,49 +98,53 @@ let getAvailableActionTests =
             
         [Card.One; Card.Two]|> List.collect canMoveFromStart |> testList "Can only move from start with one or two"
         
-        test "When one is drawn moving from start should change active player" {
+        test "When one is drawn, active player should change after move action is chosen" {
             let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = Card.One }
-            let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
-            match newGameState with
-            | Ok(Drawing(gameState)) ->Expect.equal gameState.ActivePlayer dad "Expected turn to move to next player"
-            | _ -> failtest "Expected game to transition to drawState"         
+            let activePlayer = result {
+                let! newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                return! newGameState |> GameState.getActivePlayer
+            }
+            
+            Expect.equal activePlayer (Ok(dad)) "Expected turn to move to next player"
         }
         
         test "When two is drawn moving from start should not change active player (player gets to draw again)" {
-            let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = Card.Two }
-            let newGameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
-            match newGameState with
-            | Ok(Drawing(gameState)) ->Expect.equal gameState.ActivePlayer levi "Expected active player to get another turn"
-            | _ -> failtest "Expected game to transition to drawState"         
+            let twoDrawn = ChoosingAction{BoardState = initialBoardState; DrawnCard = Card.Two }
+            
+            let activePlayer = result {
+                let! newGameState = twoDrawn |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                return! newGameState |> GameState.getActivePlayer
+            }
+            
+            Expect.equal activePlayer (Ok(levi)) "Expected active player to get another turn"
         }
         
         let canNotMoveFromStart card =
             let initialGameState = ChoosingAction{BoardState = initialBoardState; DrawnCard = card }
+            
             Seq.toList (testParam initialGameState [
                 $"When all pieces are in home squares and a %A{card} is drawn, the player should only be able to pass turn",
                  fun initialGameState () ->
                     let availableActions = initialGameState |> GameState.getAvailableActions
-                    
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions [Action.PassTurn] "Expected pass turn to be only action"
-                    | Error _ -> failtest "Unexpected error"
-                    
+                    Expect.equal availableActions (Ok([Action.PassTurn])) "Expected pass turn to be only action"
                     
                  $"When all pieces are in home squares and a %A{card} is drawn, choosing pass turn action should change the active player",
                  fun initialGameState () ->
-                        let newGameState = initialGameState |> tryChooseAction Action.PassTurn
-                        match newGameState with
-                        | Ok(Drawing(gameState)) ->
-                            Expect.equal gameState.ActivePlayer dad "Expected turn to move to next player"
-                        | _ -> failtest "Expected game to transition to drawState"
+                    let activePlayer = result {
+                        let! newGameState = initialGameState |> tryChooseAction Action.PassTurn
+                        return! newGameState |> GameState.getActivePlayer
+                    }
+                    Expect.equal activePlayer (Ok(dad)) "Expected turn to move to next player"
                         
                  $"When all pieces are in home squares and a %A{card} is drawn, choosing pass turn action should not change the token positions",
                  fun initialGameState () ->
-                        let newGameState = initialGameState |> tryChooseAction Action.PassTurn
-                        match (newGameState,initialGameState) with
-                        | Ok(Drawing(newGameState)),ChoosingAction(initialGameState) ->
-                            Expect.equal initialGameState.BoardState.TokenPositions newGameState.TokenPositions "Expected token positions to not change"
-                        | _ -> failtest "Expected game to transition to drawState"
+                    let newGameState = initialGameState |> tryChooseAction Action.PassTurn
+                    
+                    let tokenPositions = result {
+                        let! newGameState = initialGameState |> tryChooseAction Action.PassTurn
+                        return! newGameState |> GameState.getTokenPositions
+                    }
+                    Expect.equal tokenPositions (Ok(initialBoardState.TokenPositions)) "Expected token positions to not change"
                         
                  $"When all pieces are in home squares and a %A{card} is drawn, moving a pawn should be an invalid move",
                  fun initialGameState () ->
@@ -984,42 +975,15 @@ let getAvailableActionTests =
                             ActivePlayer = levi
                      }
                      
-                     let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eight }
+                     let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Four }
                      
                      let availableActions = gameState |> GameState.getAvailableActions 
                      
                      match availableActions with
-                     | Ok(actions) -> Expect.equal actions [Action.PassTurn] "Expected only move to be pass turn"
+                     | Ok(actions) -> Expect.equal actions [MovePawn(GreenPawn1, -4)] "Should not be able to move pieces on home backwards"
                      | Error _ -> failtest "Unexpected error"
                  }
                  
-                test "Game should transition to game over state when a player gets all pieces home" {
-                    
-                    let boardState = {
-                           Deck = newDeck
-                           Players = [levi;dad]
-                           TokenPositions = [
-                               // Yellow 14 = 1 away from safety square
-                               GreenPawn1, BoardPosition.Safety(SafetySquare.Five)
-                               GreenPawn2, BoardPosition.Home
-                               GreenPawn3, BoardPosition.Home
-                               
-                               BluePawn1, BoardPosition.Start
-                               BluePawn2, BoardPosition.Start
-                               BluePawn3, BoardPosition.Start
-                           ] |> Map.ofList
-                           ActivePlayer = levi
-                    }
-                    
-                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eight }
-                    
-                    let availableActions = gameState |> GameState.getAvailableActions 
-                    
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions [Action.PassTurn] "Expected only move to be pass turn"
-                    | Error _ -> failtest "Unexpected error"
-                }
-                
                 test "Game should transition to game over state when a player gets all pieces home" {
                     
                     let boardState = {
@@ -1050,6 +1014,5 @@ let getAvailableActionTests =
             // Can't move a piece backwards from home
             //@TODO - reshuffle deck when cards are empty
         ]
-           
     ]
 ]

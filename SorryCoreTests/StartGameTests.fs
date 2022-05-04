@@ -10,7 +10,6 @@ let startGameTests =
     let levi = {Color=Color.Green; Name = "Levi"}
     let corbin = {Color=Color.Yellow; Name = "Corbin"}
     let micah = {Color=Color.Blue; Name = "Micah"}
-    let barrett = {Color=Color.Red; Name = "Barrett"}
     
     let random1 = fun () -> 1
     let tryStartGame = GameState.tryStartGame random1
@@ -107,15 +106,6 @@ let startGameTests =
             }
             
             Expect.equal activePlayers (Ok([levi;corbin;micah])) "Expected active player to be chosen by random number"
-        }
-        
-        test "The only action for a newly created game should be 'draw card'" {
-            let availableActions = result {
-                let! gameState = SettingUp({Players = [levi;corbin;micah]}) |> tryStartGame
-                return! gameState |> GameState.getAvailableActions
-            }
-            
-            Expect.equal availableActions (Ok([Action.DrawCard])) "Expected available action to be single action of draw card"
         }
     ]
     
