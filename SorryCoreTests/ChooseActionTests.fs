@@ -195,23 +195,22 @@ let getAvailableActionTests =
                             Action.MovePawn(GreenPawn2, expectedMove)
                             Action.MovePawn(GreenPawn3, expectedMove)
                             ]
-                        match availableActions with
-                        | Ok(actions) -> Expect.equal actions expectedActions $"Expected to be able to move any piece by %A{card}"
-                        | Error _ -> failtest "Unexpected Error"
+                        Expect.equal availableActions (Ok(expectedActions)) $"Expected to be able to move any piece by %A{card}"
                     $"Expect token position to be updated when moving by %A{card}",
                     fun gameState () ->
-                        let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
-                        match newGameState with
-                        | Ok(Drawing(gameState)) ->
-                            Expect.equal gameState.TokenPositions.[GreenPawn1] expectedMoveSquare $"Expected pawn 1 to be moved %i{expectedMove} space to %A{expectedMoveSquare}"
-                        | _ -> failtest "Expected game to transition to draw state"
+                        let greenPawn1Pos = result {
+                            let! newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
+                            let! tokenPositions = newGameState |> GameState.getTokenPositions
+                            return tokenPositions.[GreenPawn1]
+                        }
+                        Expect.equal greenPawn1Pos (Ok(expectedMoveSquare)) $"Expected pawn 1 to be moved %i{expectedMove} space to %A{expectedMoveSquare}"
                     $"Expect active player to be updated",
                     fun gameState () ->
-                        let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
-                        match newGameState with
-                        | Ok(Drawing(gameState)) -> 
-                            Expect.equal gameState.ActivePlayer dad "Expected active player to switch to dad"
-                        | _ -> failtest "Expected game to transition to draw state" 
+                        let activePlayer = result {
+                            let! newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
+                            return! newGameState |> GameState.getActivePlayer
+                        }
+                        Expect.equal activePlayer (Ok(dad)) "Expected active player to switch to dad"
                 ])        
               
             basicMovementCardsTests Card.One 1 (Outer(Color.Green, OuterCoordinate.Three)) |> testList "One Basic Movement Tests"
@@ -246,25 +245,26 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn2, 2)
                         Action.MovePawn(GreenPawn3, 2)
                         ]
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece by 2"
-                    | Error _ -> failtest "Unexpected Error" 
+                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece by 2"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 2))
                 
                 test $"Expect token positions to be updated when moving by 2" {
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Three)) "Expected pawn 1 to be moved 2 space to green 3"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn1Pos = result {
+                       let! newGameState = newGameState
+                       let! tokenPositions = newGameState |> GameState.getTokenPositions
+                       return tokenPositions.[GreenPawn1]
+                    }
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.Three))) "Expected pawn 1 to be moved 2 space to green 3"
                 }
                 
                 test $"Expect active player to draw again when 2 is drawn" {
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.ActivePlayer levi "Expected active player to draw again"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let activePlayer = result {
+                        let! newGameState = newGameState
+                        return! newGameState |> GameState.getActivePlayer
+                    }
+                    Expect.equal activePlayer (Ok(levi)) "Expected active player to draw again"
                 }
             ]
             
@@ -294,38 +294,39 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn2, -4)
                         Action.MovePawn(GreenPawn3, -4)
                         ]
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece backwards 4"
-                    | Error _ -> failtest "Unexpected Error" 
+                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece backwards 4"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn2, -4))
                 
                 test $"Expect token position to be updated when moving backwards 4" {
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Blue, OuterCoordinate.Twelve))
-                            "Expected pawn 1 to be moved backwards 4 spaces to yellow 12"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn2Pos = result {
+                        let! newGameState = newGameState
+                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn2]
+                    } 
+                    Expect.equal greenPawn2Pos (Ok(Outer(Color.Blue, OuterCoordinate.Twelve)))
+                        "Expected pawn 1 to be moved backwards 4 spaces to yellow 12"
                 }
                 
                 test $"Expect turn to move to next player" {
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let activePlayer = result {
+                        let! newGameState = newGameState
+                        return! newGameState |> GameState.getActivePlayer
+                    }
+                    Expect.equal activePlayer (Ok(dad)) "Expect turn to move to next player"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, -4))
                 
                 test $"Expect token to wrap behind first square moving backwards 4 from opening square" {
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Yellow, OuterCoordinate.Twelve))
-                            "Expected pawn 1 to be moved backwards 4 spaces to yellow 12"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn1Pos = result {
+                        let! newGameState = newGameState
+                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn1]
+                    } 
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Yellow, OuterCoordinate.Twelve)))
+                        "Expected pawn 1 to be moved backwards 4 spaces to yellow 12"
                 }
             ]
             
@@ -360,46 +361,49 @@ let getAvailableActionTests =
                         Action.SplitMove7((GreenPawn1, 5), (GreenPawn2, 2))
                         Action.SplitMove7((GreenPawn1, 6), (GreenPawn2, 1))
                     ]
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece backwards 4"
-                    | Error _ -> failtest "Unexpected Error" 
+                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece backwards 4"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 7))
                 
                 test $"Expect token position to be updated when moving pawn forward 7" {
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Eight))
-                            "Expected pawn 1 to be moved forward 7 spaces to green 8"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn1Pos = result {
+                        let! newGameState = newGameState
+                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn1]
+                    } 
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.Eight)))
+                        "Expected pawn 1 to be moved forward 7 spaces to green 8"
                 }
                 
                 test $"Expect turn to move to next player" {
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let activePlayer = result {
+                        let! newGameState = newGameState
+                        return! newGameState |> GameState.getActivePlayer
+                    } 
+                    Expect.equal activePlayer (Ok(dad)) "Expect turn to move to next player"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.SplitMove7((GreenPawn1, 1),(GreenPawn2,6)))
                 
                 test $"Expect token 1 to be move forward 1 when splitting move 7 and moving pawn 1 forward 1" {
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Two))
-                            "Expected pawn 1 to be moved backwards 1 spaces to green 1"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn1Pos = result {
+                        let! newGameState = newGameState
+                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn1]
+                    } 
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.Two)))
+                        "Expected pawn 1 to be moved backwards 1 spaces to green 1"
                 }
                 
                 test $"Expect token 2 to be move forward 6 when splitting move 7 and moving pawn 2 forward 6" {
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Red, OuterCoordinate.Seven))
-                            "Expected pawn 2 to be moved forward 6 spaces to red 7"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn2Pos = result {
+                        let! newGameState = newGameState
+                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn2]
+                    } 
+                    Expect.equal greenPawn2Pos (Ok(Outer(Color.Red, OuterCoordinate.Seven)))
+                        "Expected pawn 2 to be moved forward 6 spaces to red 7"
                 }
                 
                 // 7 can not move on home
@@ -435,38 +439,39 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn2, -1)
                         Action.MovePawn(GreenPawn3, -1)
                         ]
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece forwards 10 or backwards 1"
-                    | Error _ -> failtest "Unexpected Error" 
+                    
+                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece forwards 10 or backwards 1"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn2, 10))
                 
                 test $"Expect token position to be updated when moving forwards 10" {
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Yellow, OuterCoordinate.Eleven))
-                            "Expected pawn 1 to be moved forwards 10 spaces to yellow 11"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn1Pos = result {
+                        let! newGameState = newGameState
+                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn2]
+                    }
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Yellow, OuterCoordinate.Eleven)))
+                        "Expected pawn 2 to be moved forwards 10 spaces to yellow 11"
                 }
                 
                 test $"Expect turn to move to next player" {
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let activePlayer = result {
+                        let! newGameState = newGameState
+                        return! newGameState |> GameState.getActivePlayer
+                    } 
+                    Expect.equal activePlayer (Ok(dad)) "Expect turn to move to next player"
                 }
                 
-                let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, -1))
                 
                 test $"Expect token to wrap behind first square moving backwards 1 space from opening square" {
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Yellow, OuterCoordinate.Fifteen))
-                            "Expected pawn 1 to be moved backwards 1 spaces to yellow 15"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn1Pos = result {
+                        let! newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, -1))
+                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn1]
+                    }
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Yellow, OuterCoordinate.Fifteen)))
+                        "Expected pawn 1 to be moved backwards 1 spaces to yellow 15"
                 }
             ]
             
@@ -500,46 +505,50 @@ let getAvailableActionTests =
                         Action.SwitchPawns(GreenPawn2, BluePawn1)
                         Action.SwitchPawns(GreenPawn3, BluePawn1)
                         ]
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece forwards 11 or switch with an opponents piece"
-                    | Error _ -> failtest "Unexpected Error" 
+                    
+                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece forwards 11 or switch with an opponents piece"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 11))
                 
                 test $"Expect token position to be updated when moving forwards 11" {
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Twelve))
-                            "Expected pawn 1 to be moved forwards 11 spaces to yellow 12"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn1Pos = result {
+                        let! gameState = newGameState
+                        let! tokenPositions = gameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn1]
+                    } 
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.Twelve)))
+                        "Expected pawn 1 to be moved forwards 11 spaces to yellow 12"
                 }
                 
                 test $"Expect turn to move to next player" {
-                    
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let activePlayer = result {
+                        let! newGameState = newGameState
+                        return! newGameState |> GameState.getActivePlayer
+                    }
+                    Expect.equal activePlayer (Ok(dad)) "Expect turn to move to next player"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
                 
                 test $"Expect green pawn 1 to move to position where blue pawn 1 was" {
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Blue, OuterCoordinate.One))
-                            "Expected green pawn 1 to move to position where blue pawn 1 was"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let greenPawn1Pos = result {
+                        let! gameState = newGameState
+                        let! tokenPositions = gameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn1]
+                    } 
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Blue, OuterCoordinate.One)))
+                        "Expected green pawn 1 to move to position where blue pawn 1 was"
                 }
                 
                 test $"Expect blue pawn 1 to move to position where green pawn 1 was" {
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[BluePawn1] (Outer(Color.Green, OuterCoordinate.One))
-                            "Expected green pawn 1 to move to position where blue pawn 1 was"
-                    | _ -> failtest "Expected game to transition to draw state" 
+                    let bluePawn1Pos = result {
+                        let! gameState = newGameState
+                        let! tokenPositions = gameState |> GameState.getTokenPositions
+                        return tokenPositions.[BluePawn1]
+                    } 
+                    Expect.equal bluePawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.One)))
+                        "Expected green pawn 1 to move to position where blue pawn 1 was"
                 }
                 
                 let boardState = {
@@ -569,13 +578,8 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn3, 11)
                     ]
                     
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move all pieces 11 but not swtich with a"
-                    | Error _ -> failtest "Unexpected Error" 
+                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move all pieces 11 but not switch"
                 }
-                // @TODO -     If you switch with a player on boost square you get to boost
-                
-    
                 
                 test $"If you switch with a player on a boost square, you should boost to end of slide region" {
                     let boardState = {
@@ -595,14 +599,14 @@ let getAvailableActionTests =
                     
                     let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eleven }
                     
-                    let newGameState = gameState |> tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
+                    let greenPawn1Pos = result {
+                        let! newGameState = gameState |> tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
+                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        return tokenPositions.[GreenPawn1]
+                    }
                     
-                    match newGameState with
-                    | Ok(Drawing(gameState)) -> 
-                        Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Blue, OuterCoordinate.Ten))
+                    Expect.equal greenPawn1Pos (Ok(Outer(Color.Blue, OuterCoordinate.Ten)))
                             "Expected green pawn 1 to move to position where blue pawn 1 was AND then slide to end of boost region"
-                    | _ -> failtest "Expected game to transition to draw state" 
-                    
                 }
                 
                 test "11 has option to pass turn when on safety row" {
@@ -628,9 +632,7 @@ let getAvailableActionTests =
                     
                     let availableActions = gameState |> GameState.getAvailableActions 
                     
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected active player to ether switch or pass turn"
-                    | Error _ -> failtest "Unexpected error"
+                    Expect.equal availableActions (Ok(expectedActions)) "Expected active player to ether switch or pass turn"
                 }
             ]
             
@@ -979,9 +981,7 @@ let getAvailableActionTests =
                      
                      let availableActions = gameState |> GameState.getAvailableActions 
                      
-                     match availableActions with
-                     | Ok(actions) -> Expect.equal actions [MovePawn(GreenPawn1, -4)] "Should not be able to move pieces on home backwards"
-                     | Error _ -> failtest "Unexpected error"
+                     Expect.equal availableActions (Ok([MovePawn(GreenPawn1, -4)])) "Should not be able to move pieces on home backwards"
                  }
                  
                 test "Game should transition to game over state when a player gets all pieces home" {
@@ -1006,10 +1006,7 @@ let getAvailableActionTests =
                     
                     let newGameState = gameState |> tryChooseAction (MovePawn(GreenPawn1, 1)) 
                     
-                    match newGameState with
-                    | Ok(GameOver(gameState)) ->
-                        Expect.equal gameState.Winner levi "Expected game to transition to game over with levi as winner"
-                    | _ -> failtest "Expected game to transition to game over state"
+                    Expect.equal newGameState (Ok(GameOver{Winner=levi})) "Expected game to transition to game over with levi as winner"
                 }
             // Can't move a piece backwards from home
             //@TODO - reshuffle deck when cards are empty
