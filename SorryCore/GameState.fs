@@ -118,13 +118,15 @@ let getAvailableActions game =
         let canMoveAnyPiece predicate moveIncrement =
             let isValidMove (pawn:Pawn, position) =
                 let ownPawnIsNotOnMoveToSquare (pawn:Pawn, moveToSquare) =
-                    let pieceOnMoveToSquare = boardPositions |> Map.tryFindKey (fun pawn position -> pawn.Color = activeColor && position = moveToSquare)
-                    match pieceOnMoveToSquare with
+                    let pieceIsOnMoveToSquare =
+                        boardPositions |> Map.tryFindKey (fun pawn position -> pawn.Color = activeColor && position = moveToSquare)
+                    match pieceIsOnMoveToSquare with
                     | Some _ -> false
                     | None -> true
                 let moveToSquare = position |> positionAheadOfCurrentBy moveIncrement pawn.Color
                 match moveToSquare with
                 | None -> false
+                | Some(moveToSquare) when moveToSquare = Home -> true
                 | Some(moveToSquare) -> ownPawnIsNotOnMoveToSquare (pawn, moveToSquare)
                    
             boardPositions
@@ -291,7 +293,7 @@ let tryChooseAction random action game =
        {gameState with ActivePlayer=gameState.Players.[nextIndex]}
                          
     let sendPawnBackToStartIfOnPosition (position:BoardPosition) (tokenPositions:TokenPositions) =
-        let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ p -> p = position)
+        let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ p -> p = position && position <> Home)
                                 
         match opponentToBump with
         | Some(pawn) -> tokenPositions |> Map.add pawn Start
@@ -377,12 +379,22 @@ let tryChooseAction random action game =
                         | DrawCard -> game |> tryDrawCard random
                         | _ -> Error(game, "Can only draw card when game is in draw state")
                     | ChoosingAction(gameState) ->
+                        let checkWinner (boardState:BoardState) =
+                            boardState.TokenPositions
+                            |> Map.toSeq
+                            |> Seq.groupBy (fun (pawn, position) -> pawn.Color)
+                            |> Seq.tryFind (fun (color, positions) -> positions |> Seq.forall (fun (_, pos) -> pos = Home))
+                            |> Option.bind (fun (color, _) -> boardState.Players |> List.tryFind (fun player -> player.Color = color))
+                           
                         match action with
                         | MovePawn(pawn,moveIncrement) ->
                             let newBoardState = gameState.BoardState |> movePawn pawn moveIncrement
-                            match gameState.DrawnCard with
-                            | Card.Two -> Ok(Drawing(newBoardState))
-                            | _ -> Ok(Drawing(newBoardState |> updateActivePlayer))
+                            match newBoardState |> checkWinner with
+                            | Some(winner) -> Ok(GameOver{Winner=winner})
+                            | None ->
+                                match gameState.DrawnCard with
+                                | Card.Two -> Ok(Drawing(newBoardState))
+                                | _ -> Ok(Drawing(newBoardState |> updateActivePlayer))
                         | SplitMove7((pawn1, move1),(pawn2, move2)) ->
                             let newBoardState = gameState.BoardState
                                                 |> movePawn pawn1 move1

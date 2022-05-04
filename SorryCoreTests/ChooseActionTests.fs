@@ -1006,6 +1006,7 @@ let getAvailableActionTests =
                     
                     Expect.equal newGameState (Ok(GameOver{Winner=levi})) "Expected game to transition to game over with levi as winner"
                 }
+                
             // Can't move a piece backwards from home
             //@TODO - reshuffle deck when cards are empty
         ]
