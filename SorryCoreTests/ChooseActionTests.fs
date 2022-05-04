@@ -609,7 +609,7 @@ let getAvailableActionTests =
                             "Expected green pawn 1 to move to position where blue pawn 1 was AND then slide to end of boost region"
                 }
                 
-                test "11 has option to pass turn when on safety row" {
+                test "11 has option to pass turn if move 11 is invalid move" {
                     
                     let boardState = {
                            Deck = newDeck
@@ -954,9 +954,7 @@ let getAvailableActionTests =
                     
                     let availableActions = gameState |> GameState.getAvailableActions 
                     
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions [Action.PassTurn] "Expected only move to be pass turn"
-                    | Error _ -> failtest "Unexpected error"
+                    Expect.equal availableActions (Ok[Action.PassTurn]) "Expected only move to be pass turn"
                 }
                 
                 test "Can not move a piece backwards from home" {

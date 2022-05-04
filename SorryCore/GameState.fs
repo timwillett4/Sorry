@@ -3,6 +3,7 @@
 open FSharp.Core.Extensions
 open FSharp.Core.Extensions.Result
 open FSharp.Core.Extensions.Validation
+open Microsoft.FSharp.Data.UnitSystems.SI.UnitNames
 open Sorry.Core
 
 /// The Sorry Game State consists
@@ -52,21 +53,21 @@ let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
             let colorDiff = localPosition / nSpacePerColor
             let outerCoord = localPosition - (colorDiff * nSpacePerColor)
             let color = ((localColor |> int) + colorDiff) % nColors |> enum<Color>
-            Outer(color, outerCoord |> enum)
+            Some(Outer(color, outerCoord |> enum))
         // This occurs when you are at or near the opening square and move backward
         | _ when localPosition <= 0 && localPosition >= -3 ->
             let color = ((localColor |> int) - 1) |> wrap nColors
             let color = color |> enum
-            Outer(color, nSpacePerColor + localPosition |> enum)
+            Some(Outer(color, nSpacePerColor + localPosition |> enum))
         | _ when localPosition >= 60 && localPosition <= 64 ->
-            Safety((localPosition - 59) |> enum)
-        | _ when localPosition = 65 -> Home
-        | _ -> failwith $"Invalid board position"
+            Some(Safety((localPosition - 59) |> enum))
+        | _ when localPosition = 65 -> Some(Home)
+        | _ -> None
        
     match currentPosition with 
     | Start ->
         assert(moveIncrement = 1)
-        Outer(localColor, OuterCoordinate.One)
+        Some(Outer(localColor, OuterCoordinate.One))
     | position -> ((position |> toLocal) + moveIncrement) |> toBoardPosition
         
 /// getAvailableColors returns the available colors left to choose from
@@ -115,17 +116,21 @@ let getAvailableActions game =
             | _ -> false
         
         let canMoveAnyPiece predicate moveIncrement =
-            let ownPawnIsNotOnMoveToSquare (pawn:Pawn, position) =
-               let newPosition = position |> positionAheadOfCurrentBy moveIncrement pawn.Color
-               let pieceOnMoveToSquare = boardPositions |> Map.tryFindKey (fun pawn position -> pawn.Color = activeColor && position = newPosition)
-               match pieceOnMoveToSquare with
-               | Some _ -> false
-               | None -> true
+            let isValidMove (pawn:Pawn, position) =
+                let ownPawnIsNotOnMoveToSquare (pawn:Pawn, moveToSquare) =
+                    let pieceOnMoveToSquare = boardPositions |> Map.tryFindKey (fun pawn position -> pawn.Color = activeColor && position = moveToSquare)
+                    match pieceOnMoveToSquare with
+                    | Some _ -> false
+                    | None -> true
+                let moveToSquare = position |> positionAheadOfCurrentBy moveIncrement pawn.Color
+                match moveToSquare with
+                | None -> false
+                | Some(moveToSquare) -> ownPawnIsNotOnMoveToSquare (pawn, moveToSquare)
                    
             boardPositions
             |> Map.toList
             |> List.filter (fun (pawn, position) -> pawn.Color = activeColor && position |> predicate)
-            |> List.filter ownPawnIsNotOnMoveToSquare 
+            |> List.filter isValidMove 
             |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, moveIncrement))
             
         let canMoveAnyPieceOutOfStart = canMoveAnyPiece (fun position -> position = Start) 1
@@ -199,8 +204,12 @@ let getAvailableActions game =
                       | Card.Twelve -> canMoveAnyPieceNotOnStartOrHome 12
                       | Card.Sorry -> canMoveAnyPieceOnStartToBumpAnyPieceNotOnStartHomeOrSafety
                       
+        let switchIsOnlyValidMove actions =
+            actions |> List.forall (fun action -> match action with | SwitchPawns _ -> true | _ -> false)
+            
         match actions with
         | [] -> Ok([Action.PassTurn])
+        | switch when actions |> switchIsOnlyValidMove -> Ok(switch@[Action.PassTurn])
         | actions -> Ok(actions)
         
     
@@ -324,13 +333,16 @@ let tryChooseAction random action game =
        
        let newPosition = currentPosition |> positionAheadOfCurrentBy moveIncrement pawnToMove.Color
           
-       let newBoardState =
-           gameState.TokenPositions
-           |> sendPawnBackToStartIfOnPosition newPosition
-           |> Map.add pawnToMove newPosition
-           |> slideIfPawnLandsOnSlideSquare pawnToMove
-       
-       {gameState with TokenPositions=newBoardState}
+       match newPosition with
+       | Some(newPosition) ->
+           let newBoardState =
+               gameState.TokenPositions
+               |> sendPawnBackToStartIfOnPosition newPosition
+               |> Map.add pawnToMove newPosition
+               |> slideIfPawnLandsOnSlideSquare pawnToMove
+           
+           {gameState with TokenPositions=newBoardState}
+        | None -> failwith "Invalid move"
        
     let switchPawns pawn1 pawn2 (gameState:BoardState) =
         let pawn1Pos = gameState.TokenPositions.[pawn1]
