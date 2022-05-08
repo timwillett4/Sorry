@@ -280,7 +280,10 @@ let tryDrawCard random game =
         let drawIndex = random() % gameState.Deck.Length
         let topCut, bottomCut = gameState.Deck |> List.splitAt drawIndex
         let drawnCard = bottomCut.Head
-        let newDeck = topCut @ bottomCut.Tail
+        let newDeck =
+            match topCut @ bottomCut.Tail with
+            | [] -> newDeck
+            | deck -> deck
         Ok(ChoosingAction({BoardState={gameState with Deck=newDeck};DrawnCard=drawnCard}))
     | _ -> Error(game, "Can only draw a card when game is in draw state")
 

@@ -1007,8 +1007,59 @@ let getAvailableActionTests =
                     Expect.equal newGameState (Ok(GameOver{Winner=levi})) "Expected game to transition to game over with levi as winner"
                 }
                 
-            // Can't move a piece backwards from home
-            //@TODO - reshuffle deck when cards are empty
+                test "Can not move a piece backward from home" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               // Yellow 14 = 1 away from safety square
+                               GreenPawn1, BoardPosition.Safety(SafetySquare.Five)
+                               GreenPawn2, BoardPosition.Home
+                               GreenPawn3, BoardPosition.Home
+                               
+                               BluePawn1, BoardPosition.Start
+                               BluePawn2, BoardPosition.Start
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                    }
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Four }
+                    
+                    let availableActions = gameState |> GameState.getAvailableActions 
+                    
+                    Expect.equal availableActions (Ok([MovePawn(GreenPawn1, -4)])) "Expected only move to be move pawn1 backwards 4"
+                }
+            ]
+            
+            test "Deck should be shuffled when cards run out" {
+                let boardState = {
+                    Deck = []
+                    Players = [levi;dad]
+                    TokenPositions = [
+                        // Yellow 14 = 1 away from safety square
+                        GreenPawn1, BoardPosition.Start
+                        GreenPawn2, BoardPosition.Start
+                        GreenPawn3, BoardPosition.Start
+                               
+                        BluePawn1, BoardPosition.Start
+                        BluePawn2, BoardPosition.Start
+                        BluePawn3, BoardPosition.Start
+                    ] |> Map.ofList
+                    ActivePlayer = levi
+                }
+                    
+                let gameState = Drawing(boardState)
+                    
+                let newGameState = gameState |> tryChooseAction Action.DrawCard
+                
+                let drawnCard = result {
+                   let! gameState = newGameState
+                   return gameState |> GameState.getDrawnCard
+                }
+                    
+                Expect.equal drawnCard (Ok(Some(Card.One))) "Expected deck to be shuffled when cards run out"
+            }
         ]
     ]
-]

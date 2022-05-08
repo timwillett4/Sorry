@@ -17,9 +17,7 @@ let drawCardTests =
                 return game |> GameState.getDrawnCard
             }
             
-            match drawnCard with
-            | Ok(drawnCard) -> Expect.isNone drawnCard "Expected current card to be none when no cards had been drawn"
-            | Error(e, _) -> failtest $"Unexpected error: {e}"
+            Expect.equal drawnCard (Ok(None)) "Expected getDrawnCard to return none when still in draw state"
         }
         
         test "The next card chosen should be determined by the random number generator" {
@@ -34,10 +32,7 @@ let drawCardTests =
                 return game |> GameState.getDrawnCard
             }
             
-            match drawnCard with
-            | Ok(Some(currentCard)) -> Expect.equal currentCard Card.One "Expected first card in deck to be drawn"
-            | Ok(None) -> failtest "Expected card to be drawn"
-            | Error(e, _) -> failtest $"Unexpected error: {e}"
+            Expect.equal drawnCard (Ok(Some(Card.One))) "Expected first card in deck to be drawn"
         }
         
         // test try draw card twice in a row should raise error?
