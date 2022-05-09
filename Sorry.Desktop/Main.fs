@@ -31,154 +31,141 @@ let toScreenCoords borderWidth squareWidth x y =
     let top = borderWidth + squareWidth * y
     (left, top)
     
-let rec createSquare borderWidth squareWidth (color:string) (x, y) =
-    let left,top = toScreenCoords borderWidth squareWidth x y
-    Rectangle.create [
-        Rectangle.fill color
-        Rectangle.width squareWidth
-        Rectangle.height squareWidth
-        Rectangle.left left
-        Rectangle.top top
-        Rectangle.stroke "Black"
-        Rectangle.strokeThickness 1.0
-    ] :> Types.IView
-    
-let createCircle borderWidth squareWidth circleRatio x y (color:string) =
-    let left,top = toScreenCoords borderWidth squareWidth x y
-    Ellipse.create [
-        Ellipse.fill color
-        Ellipse.width (squareWidth * circleRatio)
-        Ellipse.height (squareWidth * circleRatio)
-        Ellipse.left left
-        Ellipse.top top
-        Ellipse.stroke "Black"
-        Ellipse.strokeThickness 2.0
-    ] :> IView
-
-let createArrow borderWidth squareWidth (color:string) (startX, startY) (endX, endY) =
-    let startX,startY = toScreenCoords borderWidth squareWidth startX startY
-    let endX,endY = toScreenCoords borderWidth squareWidth endX endY
-    [
-        Line.create [
-            Line.startPoint (startX, startY)
-            Line.endPoint (endX, endY)
-            Line.strokeLineCap PenLineCap.Round
-            Line.strokeJoinCap PenLineJoin.Bevel
-            Line.stroke color
-            Line.strokeThickness 2.0
-        ] :> IView
-        
-        // |--->
-        // @TODO
-        (*let horizontal = startY - endY = 0 
-        let (cap1Start,cap1End) =
-            match horizontal with
-            | true -> ((endX-.25,endY-.25),(endX, endY))
-            | false -> ((endX-.25,endY-.25),(endX, endY))*)
-            
-        Line.create [
-            Line.startPoint (startX, startY)
-            Line.endPoint (endX, endY)
-            Line.strokeLineCap PenLineCap.Round
-            Line.strokeJoinCap PenLineJoin.Bevel
-            Line.stroke color
-            Line.strokeThickness 2.0
-        ] :> IView
-        
-        Line.create [
-            Line.startPoint (startX, startY)
-            Line.endPoint (endX, endY)
-            Line.strokeLineCap PenLineCap.Round
-            Line.strokeJoinCap PenLineJoin.Bevel
-            Line.stroke color
-            Line.strokeThickness 2.0
-        ] :> IView
-        
-        Line.create [
-            Line.startPoint (startX, startY)
-            Line.endPoint (startX, startY)
-            Line.strokeLineCap PenLineCap.Round
-            Line.strokeJoinCap PenLineJoin.Bevel
-            Line.stroke color
-            Line.strokeThickness 2.0
-        ] :> IView
-    ]    
-type Square = {
-    x : int // @TODO contrained type 0 -16??
-    y : int
-    color : string
-}
-
 let view (state: State) (dispatch: Msg -> unit) =
+    // @TODO - scale by screen width/height
+    let borderWidth = 20.0
+    let squareWidth = 30.0
+    
+    let createSquare borderWidth squareWidth heightRatio widthRatio (color:string) (x, y) =
+        let left,top = toScreenCoords borderWidth squareWidth x y
+        Rectangle.create [
+            Rectangle.fill color
+            Rectangle.width (squareWidth * heightRatio)
+            Rectangle.height (squareWidth * widthRatio)
+            Rectangle.left left
+            Rectangle.top top
+            Rectangle.stroke "Black"
+            Rectangle.strokeThickness 1.0
+        ] :> Types.IView
+        
+    let createSquare = createSquare borderWidth squareWidth
+    
+    let createRow color (xs, ys) =
+        let xs = xs |> List.map double
+        let ys = ys |> List.map double
+        let coords = (xs, ys) ||> List.allPairs
+        coords |> List.map (createSquare 1.0 1.0 color)
+        
+    let createEllipse borderWidth squareWidth widthRatio heightRatio x y (color:string) =
+        let left,top = toScreenCoords borderWidth squareWidth x y
+        Ellipse.create [
+            Ellipse.fill color
+            Ellipse.width (squareWidth * widthRatio)
+            Ellipse.height (squareWidth * heightRatio)
+            Ellipse.left left
+            Ellipse.top top
+            Ellipse.stroke "Black"
+            Ellipse.strokeThickness 2.0
+        ] :> IView
+        
+    let createEllipse = createEllipse borderWidth squareWidth
+    
+    let createBigCircle = createEllipse 2.0 2.0
+    
+    let pawn (color:string) x y =
+        let pawnTop = createEllipse 0.4 0.4 (x + 0.3) (y) color
+        let pawnNeck = createEllipse 0.3 0.5 (x + 0.35) (y + 0.3) color
+        let pawnBase = createEllipse 0.8 0.4 (x + 0.1) (y + 0.6) color
+        [ pawnBase; pawnNeck; pawnTop ]
+        
+    let createArrow startPoint stopPoint color =
+        let startX,startY = startPoint
+        let stopX,stopY = stopPoint
+        let boostLine =
+            let createVertLine (x, y) = createSquare 0.3 1.0 color (double x + 0.35, double y)
+            let createHorLine (x, y) = createSquare 1.0 0.3 color (double x, double y + 0.35)
+            let vertStartLine = createSquare 0.3 0.6 color ((double startX + 0.35), (double startY + 0.2))
+            let horStartLine = createSquare 0.6 0.3 color ((double startX + 0.2), (double startY + 0.35))
+            match (stopX - startX), (stopY - startY) with
+            | 0, vertLen when vertLen > 0 ->
+                let boostLine =
+                    [0..vertLen - 1]
+                    |> List.map (fun y -> startX, startY + y)
+                    |> List.map (fun (x,y) -> double x, double y + 0.5)
+                    |> List.map createVertLine
+                boostLine@[horStartLine]
+            | 0, vertLen when vertLen < 0 ->
+                let boostLine =
+                    [0..abs(vertLen) - 1]
+                    |> List.map (fun y -> startX, startY - y)
+                    |> List.map (fun (x,y) -> double x, double y - 0.5)
+                    |> List.map createVertLine
+                boostLine@[horStartLine]
+            | horLen, 0 when horLen > 0 ->
+                let boostLine =
+                    [0..horLen - 1]
+                    |> List.map (fun x -> startX + x, startY)
+                    |> List.map (fun (x,y) -> double x + 0.5, double y)
+                    |> List.map createHorLine
+                boostLine@[vertStartLine]
+            | horLen, 0 when horLen < 0 ->
+                let boostLine =
+                    [0..abs(horLen) - 1]
+                    |> List.map (fun x -> startX - x, startY)
+                    |> List.map (fun (x,y) -> double x - 0.5, double y)
+                    |> List.map createHorLine
+                boostLine@[vertStartLine]
+            | _ -> failwith "Invalid line coordinate"
+        let endCircle =
+            let circleX = (stopPoint |> fst |> double) + 0.2
+            let circleY = (stopPoint |> snd |> double) + 0.2
+            createEllipse 0.6 0.6 circleX circleY color
+        
+        boostLine@[endCircle]
+    
+    let outerSquares =
+        [ ([0..15],[0])
+          ([0..15],[15])
+          ([0],[1..14])
+          ([15],[1..14]) ]
+        |> List.collect (createRow "Gray")
+        
+    let safetySquares = 
+        [ ([13],[10..14]) |> createRow "Yellow"
+          ([1..5],[13]) |> createRow "Green"
+          ([2],[1..5]) |> createRow "Red"
+          ([10..14],[2]) |> createRow "Blue" ]
+        |> List.concat
+        
+    let startCircles =
+        [ createBigCircle 13 3.5 "Blue"
+          createBigCircle 10.5 13.0 "Yellow"
+          createBigCircle 3.5 1.0 "Red"
+          createBigCircle 1 10.5 "Green" ]
+    
+    let homeCircles =
+        [ createBigCircle 8.0 1.5 "Blue"
+          createBigCircle 12.5 8.0 "Yellow"
+          createBigCircle 1.5 6 "Red"
+          createBigCircle 6.0 12.5 "Green" ]
+        
+    let boostArrows =
+        [ createArrow (14, 15) (11, 15) "Yellow"
+          createArrow (6, 15) (2, 15) "Yellow"
+          createArrow (0, 14) (0, 11) "Green"
+          createArrow (0, 7) (0, 3) "Green"
+          createArrow (1, 0) (4, 0) "Red"
+          createArrow (10, 0) (14, 0) "Red"
+          createArrow (15, 1) (15, 4) "Blue"
+          createArrow (15, 10) (15, 14) "Blue" ]
+        |> List.concat
+        
+    let pawns =
+        [ pawn "Red" 5 0
+          pawn "Yellow" 0 0 ]
+        |> List.concat
+        
     Canvas.create [
         Canvas.background "Aqua"
-        // Start out with simple circle for each pawn
-        // draw in center of square except for start/home draw by color
-        // @TODO - add y and draw all squares
+        Canvas.children (outerSquares@safetySquares@startCircles@homeCircles@boostArrows@pawns)]
         
-        let createRow color (xs, ys) =
-            let xs = xs |> List.map double
-            let ys = ys |> List.map double
-            let coords = (xs, ys) ||> List.allPairs
-            // @TODO - scale by screen width/height
-            let createGameSquare = createSquare 20.0 30.0 
-            coords |> List.map (createGameSquare color)
-            
-        let outerSquares =
-            [([0..15],[0])
-             ([0..15],[15])
-             ([0],[1..14])
-             ([15],[1..14])
-            ]
-            |> List.collect (createRow "Gray")
-            
-        let yellowSafety = ([13],[10..14]) |> createRow "Yellow"
-        let greenSafety = ([1..5],[13]) |> createRow "Green"
-        let redSafety = ([2],[1..5]) |> createRow "Red"
-        let blueSafety = ([10..14],[2]) |> createRow "Blue"
-        
-        let createBigCircle = createCircle 20.0 30.0 2.0
-        
-        let blueStart = createBigCircle 13 3.5 "Blue"
-        let blueHome = createBigCircle 8.0 1.5 "Blue"
-        
-        let yellowStart = createBigCircle 10.5 13.0 "Yellow"
-        let yellowHome = createBigCircle 12.5 8.0 "Yellow"
-        
-        let redStart = createBigCircle 3.5 1.0 "Red"
-        let redHome = createBigCircle 1.5 6 "Red"
-        
-        let greenStart = createBigCircle 1 10.5 "Green"
-        let greenHome = createBigCircle 6.0 12.5 "Green"
-        
-        let circles = [blueStart
-                       blueHome
-                       yellowStart
-                       yellowHome
-                       redStart
-                       redHome
-                       greenStart
-                       greenHome]
-        
-        
-        let createArrow = createArrow 20.0 30.0
-        
-        let createYellowArrow = createArrow "Yellow"
-        let createGreenArrow = createArrow "Green"
-        let createRedArrow = createArrow "Red"
-        let createBlueArrow = createArrow "Blue"
-        let boostArrows = [createYellowArrow (14.5, 15.5) (11.5, 15.5)
-                           createYellowArrow (6.5, 15.5) (2.5, 15.5)
-                           createGreenArrow (0.5, 14.5) (0.5, 11.5) 
-                           createGreenArrow (0.5, 6.5) (0.5, 2.5)
-                           createRedArrow (1.5, 0.5) (4.5, 0.5) 
-                           createRedArrow (9.5, 0.5) (13.5, 0.5)
-                           createBlueArrow (15.5, 1.5) (15.5, 4.5) 
-                           createBlueArrow (15.5, 9.5) (15.5, 13.5)]
-                          |> List.concat
-        
-        // @TODO - drawPawns
-        let createPawn = createCircle 20.0 30.0 0.5
-        
-        Canvas.children (outerSquares@yellowSafety@greenSafety@redSafety@blueSafety@circles@boostArrows)
-    ]
