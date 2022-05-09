@@ -220,6 +220,12 @@ let getDrawnCard game =
     | ChoosingAction(game) -> Some(game.DrawnCard)
     | _ -> None
     
+let getNumCardLeft game = 
+    match game with
+    | ChoosingAction actionState -> Ok(actionState.BoardState.Deck.Length)
+    | Drawing boardState -> Ok(boardState.Deck.Length)
+    | _ -> Error(game, "Invalid state")
+    
 // Commands
 let tryAddPlayer name color game =
     match game with

@@ -1035,7 +1035,7 @@ let getAvailableActionTests =
             
             test "Deck should be shuffled when cards run out" {
                 let boardState = {
-                    Deck = []
+                    Deck = [Card.Seven]
                     Players = [levi;dad]
                     TokenPositions = [
                         // Yellow 14 = 1 away from safety square
@@ -1052,14 +1052,12 @@ let getAvailableActionTests =
                     
                 let gameState = Drawing(boardState)
                     
-                let newGameState = gameState |> tryChooseAction Action.DrawCard
-                
-                let drawnCard = result {
-                   let! gameState = newGameState
-                   return gameState |> GameState.getDrawnCard
+                let numCardsLeft = result {
+                   let! gameState = gameState |> tryChooseAction Action.DrawCard
+                   return! gameState |> GameState.getNumCardLeft
                 }
                     
-                Expect.equal drawnCard (Ok(Some(Card.One))) "Expected deck to be shuffled when cards run out"
+                Expect.equal numCardsLeft (Ok(newDeck.Length)) "Expected deck to be shuffled when cards run out"
             }
         ]
     ]
