@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConstrainedTypes.fs" />
@@ -9,7 +9,7 @@
     <Compile Include="GameState.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="6.0.4-beta.22181.2" />
+    <PackageReference Include="FSharp.Core" Version="6.0.2" />
     <PackageReference Include="FSharpLint.Core" Version="0.12.10" />
   </ItemGroup>
   <ItemGroup>
