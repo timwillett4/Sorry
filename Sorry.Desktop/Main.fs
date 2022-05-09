@@ -2,29 +2,48 @@
 
 open Avalonia.Controls
 open Avalonia.FuncUI.Types
-open Avalonia.Layout
 open Avalonia.FuncUI
 open Avalonia.FuncUI.DSL
 open Avalonia.Controls.Shapes
-open Avalonia.Media
+
+open Sorry.Core
 
 type State =
-    { state : bool }
+    { gameState : Result<GameState, GameState*string> }
     
 // TokenPositions
-// Available Actions
-// 
+open System
+open FSharp.Core.Extensions.Result
+
 let initialState() =
-    { state = false }, Elmish.Cmd.none
+    let levi = {Color=Color.Green; Name = "Levi"}
+    let corbin = {Color=Color.Yellow; Name = "Corbin"}
+    let micah = {Color=Color.Blue; Name = "Micah"}
+    let barrett = {Color=Color.Red; Name = "Barrett"}
+    
+    let game = result {
+        let random = Random()
+        let random() = random.Next(Int32.MaxValue)
+        
+        let game = GameState.newGame
+        let! game = game |> GameState.tryAddPlayer "Levi" Color.Green
+        let! game = game |> GameState.tryAddPlayer "Corbin" Color.Yellow
+        let! game = game |> GameState.tryAddPlayer "Micah" Color.Blue
+        let! game = game |> GameState.tryAddPlayer "Barrett" Color.Red
+        
+        return! game |> GameState.tryStartGame random
+    }
+    { gameState = game }, Elmish.Cmd.none
 
 type Msg =
 | Start
 | Stop
 
 let update (msg: Msg) (state: State) : State * Elmish.Cmd<_>=
-    match msg with
-    | Start -> { state with state = true }, Elmish.Cmd.none
-    | Stop -> { state with state = false }, Elmish.Cmd.none
+    state, Elmish.Cmd.none
+    //match msg with
+    //| Start -> { state with state = true }, Elmish.Cmd.none
+    //| Stop -> { state with state = false }, Elmish.Cmd.none
 
 let toScreenCoords borderWidth squareWidth x y =
     let left = borderWidth + squareWidth * x
@@ -32,7 +51,6 @@ let toScreenCoords borderWidth squareWidth x y =
     (left, top)
     
 let view (state: State) (dispatch: Msg -> unit) =
-    // @TODO - scale by screen width/height
     let borderWidth = 20.0
     let squareWidth = 30.0
     
@@ -160,11 +178,19 @@ let view (state: State) (dispatch: Msg -> unit) =
           createArrow (15, 10) (15, 14) "Blue" ]
         |> List.concat
         
+    (*let pawns =
+        match state.gameState with
+        | Ok(Drawing gameState) ->
+            let boardPositions = gameState |> GameState.getTokenPositions
+            // @TODO - tomorrow
+            [ pawn "Red" 5 0
+              pawn "Yellow" 0 0 ]
+            |> List.concat
+        | _ failwith "Unimplemeted"*)
     let pawns =
         [ pawn "Red" 5 0
           pawn "Yellow" 0 0 ]
-        |> List.concat
-        
+       |> List.concat 
     Canvas.create [
         Canvas.background "Aqua"
         Canvas.children (outerSquares@safetySquares@startCircles@homeCircles@boostArrows@pawns)]
