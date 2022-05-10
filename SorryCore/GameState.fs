@@ -80,6 +80,7 @@ let getAvailableColors game =
         List.distinct allColors chosenColors
     | _ -> []
 
+// @TODO convert to Option instead of result
 let getTokenPositions game = 
     match game with
     | Drawing(gameState) -> Ok(gameState.TokenPositions)

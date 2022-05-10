@@ -90,12 +90,6 @@ let view (state: State) (dispatch: Msg -> unit) =
     
     let createBigCircle = createEllipse 2.0 2.0
     
-    let pawn (color:string) x y =
-        let pawnTop = createEllipse 0.4 0.4 (x + 0.3) (y) color
-        let pawnNeck = createEllipse 0.3 0.5 (x + 0.35) (y + 0.3) color
-        let pawnBase = createEllipse 0.8 0.4 (x + 0.1) (y + 0.6) color
-        [ pawnBase; pawnNeck; pawnTop ]
-        
     let createArrow startPoint stopPoint color =
         let startX,startY = startPoint
         let stopX,stopY = stopPoint
@@ -141,6 +135,12 @@ let view (state: State) (dispatch: Msg -> unit) =
         
         boostLine@[endCircle]
     
+    let createPawn (color:string) (x, y) =
+        let pawnTop = createEllipse 0.4 0.4 (x + 0.3) (y) color
+        let pawnNeck = createEllipse 0.3 0.5 (x + 0.35) (y + 0.3) color
+        let pawnBase = createEllipse 0.8 0.4 (x + 0.1) (y + 0.6) color
+        [ pawnBase; pawnNeck; pawnTop ]
+        
     let outerSquares =
         [ ([0..15],[0])
           ([0..15],[15])
@@ -149,48 +149,128 @@ let view (state: State) (dispatch: Msg -> unit) =
         |> List.collect (createRow "Gray")
         
     let safetySquares = 
-        [ ([13],[10..14]) |> createRow "Yellow"
-          ([1..5],[13]) |> createRow "Green"
-          ([2],[1..5]) |> createRow "Red"
-          ([10..14],[2]) |> createRow "Blue" ]
+        [ ([13],[10..14]) |> createRow "Green"
+          ([1..5],[13]) |> createRow "Red"
+          ([2],[1..5]) |> createRow "Blue"
+          ([10..14],[2]) |> createRow "Yellow" ]
         |> List.concat
         
     let startCircles =
-        [ createBigCircle 13 3.5 "Blue"
-          createBigCircle 10.5 13.0 "Yellow"
-          createBigCircle 3.5 1.0 "Red"
-          createBigCircle 1 10.5 "Green" ]
+        [ createBigCircle 13 3.5 "Yellow"
+          createBigCircle 10.5 13.0 "Green"
+          createBigCircle 3.5 1.0 "Blue"
+          createBigCircle 1 10.5 "Red" ]
     
     let homeCircles =
-        [ createBigCircle 8.0 1.5 "Blue"
-          createBigCircle 12.5 8.0 "Yellow"
-          createBigCircle 1.5 6 "Red"
-          createBigCircle 6.0 12.5 "Green" ]
+        [ createBigCircle 8.0 1.5 "Yellow"
+          createBigCircle 12.5 8.0 "Green"
+          createBigCircle 1.5 6 "Blue"
+          createBigCircle 6.0 12.5 "Red" ]
         
     let boostArrows =
-        [ createArrow (14, 15) (11, 15) "Yellow"
-          createArrow (6, 15) (2, 15) "Yellow"
-          createArrow (0, 14) (0, 11) "Green"
-          createArrow (0, 7) (0, 3) "Green"
-          createArrow (1, 0) (4, 0) "Red"
-          createArrow (10, 0) (14, 0) "Red"
-          createArrow (15, 1) (15, 4) "Blue"
-          createArrow (15, 10) (15, 14) "Blue" ]
+        [ createArrow (14, 15) (11, 15) "Green"
+          createArrow (6, 15) (2, 15) "Green"
+          createArrow (0, 14) (0, 11) "Red"
+          createArrow (0, 7) (0, 3) "Red"
+          createArrow (1, 0) (4, 0) "Blue"
+          createArrow (10, 0) (14, 0) "Blue"
+          createArrow (15, 1) (15, 4) "Yellow"
+          createArrow (15, 10) (15, 14) "Yellow" ]
         |> List.concat
         
-    (*let pawns =
-        match state.gameState with
-        | Ok(Drawing gameState) ->
-            let boardPositions = gameState |> GameState.getTokenPositions
-            // @TODO - tomorrow
-            [ pawn "Red" 5 0
-              pawn "Yellow" 0 0 ]
-            |> List.concat
-        | _ failwith "Unimplemeted"*)
     let pawns =
-        [ pawn "Red" 5 0
-          pawn "Yellow" 0 0 ]
-       |> List.concat 
+        let toColorString color =
+            match color with
+            | Color.Red -> "Red"
+            | Color.Green -> "Green"
+            | Color.Blue -> "Blue"
+            | Color.Yellow -> "Yellow"
+            | _ -> failwith "Invalid enum"
+            
+        let toBoardPos boardPos (pawn:Pawn) =
+            match boardPos, pawn.Color with
+            | Outer(Color.Green, outerCoord), _ when outerCoord |> int <= 11 ->
+               (11.0 - (outerCoord |> double), 15.0)
+            | Outer(Color.Green, outerCoord), _ when outerCoord |> int >= 12 ->
+               (0, 26.0 - (outerCoord |> double))
+            | Outer(Color.Red, outerCoord), _ when outerCoord |> int <= 11 ->
+               (0.0, 11.0 - (outerCoord |> double))
+            | Outer(Color.Red, outerCoord), _ when outerCoord |> int >= 12->
+               (0.0, 1.0 + (outerCoord |> int - 11))
+            | Outer(Color.Blue, outerCoord), _ when outerCoord |> int <= 11 ->
+               ((outerCoord |> double) + 4.0, 0.0)
+            | Outer(Color.Blue, outerCoord), _ when outerCoord |> int >= 12 ->
+               (15.0, 1.0 + outerCoord |> int - 11)
+            | Outer(Color.Yellow, outerCoord), _ when outerCoord |> int <= 11 ->
+               (15.0, (outerCoord |> double) + 4.0)
+            | Outer(Color.Yellow, outerCoord), _ when outerCoord |> int >= 12 ->
+               (14.0, 26.0 - outerCoord)
+            | BoardPosition.Safety(safetySquare), Color.Green ->
+                (13, 15 - safetySquare |> double)
+            | BoardPosition.Safety(safetySquare), Color.Red ->
+                (safetySquare |> double, 13)
+            | BoardPosition.Safety(safetySquare), Color.Blue ->
+                (2, safetySquare |> double)
+            | BoardPosition.Safety(safetySquare), Color.Yellow ->
+                (15 - safetySquare |> double, 2)
+            | BoardPosition.Start, Color.Green ->
+                match pawn.ID with
+                | PawnID.One -> (10.5,13.0)
+                | PawnID.Two -> (11.5,13.0)
+                | PawnID.Three -> (10.5,14.0)
+            | BoardPosition.Home, Color.Green ->
+                match pawn.ID with
+                | PawnID.One -> (12.5,8)
+                | PawnID.Two -> (13.5,8)
+                | PawnID.Three -> (13.5,9)
+            | BoardPosition.Start, Color.Red ->
+                match pawn.ID with
+                | PawnID.One -> (1,10.5)
+                | PawnID.Two -> (2,10.5)
+                | PawnID.Three -> (1,11.5)
+            | BoardPosition.Home, Color.Red ->
+                match pawn.ID with
+                | PawnID.One -> (6,12.5)
+                | PawnID.Two -> (7,12.5)
+                | PawnID.Three -> (6,13.5)
+            | BoardPosition.Start, Color.Blue ->
+                match pawn.ID with
+                | PawnID.One -> (3.5, 1.0)
+                | PawnID.Two -> (4.5, 1.0)
+                | PawnID.Three -> (3.5, 2.0)
+            | BoardPosition.Home, Color.Blue ->
+                match pawn.ID with
+                | PawnID.One -> (1.5, 6.0)
+                | PawnID.Two -> (2.5, 6.0)
+                | PawnID.Three -> (1.5, 7.0)
+            | BoardPosition.Start, Color.Yellow ->
+                match pawn.ID with
+                | PawnID.One -> (13, 3.5)
+                | PawnID.Two -> (14, 3.5)
+                | PawnID.Three -> (13, 4.5)
+            | BoardPosition.Home, Color.Yellow ->
+                match pawn.ID with
+                | PawnID.One -> (8, 1.5)
+                | PawnID.Two -> (9, 1.5)
+                | PawnID.Three -> (8, 2.5)
+            // @TODO - safety
+            | _ -> failwith "Invalid boardPos"
+        let boardPosition = result {
+            let! gameState = state.gameState
+            return! gameState |> GameState.getTokenPositions
+        }
+        match boardPosition with
+        | Ok(boardPosition) ->
+            boardPosition
+            |> Map.toList
+            |> List.map (fun (p, pos) -> createPawn (p.Color |> toColorString) ((pos,p) ||> toBoardPos))
+            |> List.concat
+        | _ -> failwith "Unimplemented"
+        
+    (*let pawns =
+        [ createPawn "Red" (5,0)
+          createPawn "Yellow" (0, 0) ]
+        |> List.concat *)
     Canvas.create [
         Canvas.background "Aqua"
         Canvas.children (outerSquares@safetySquares@startCircles@homeCircles@boostArrows@pawns)]
