@@ -45,7 +45,7 @@ let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
            let colorDist = (color |> int) - (localColor |> int) |> wrap nColors
            (colorDist * nSpacePerColor) + (coord |> int)
        | Start ->
-           failwith $"Start square is special square and can not be used with to local"
+           failwith "Start square is special square and can not be used with to local"
 
     let toBoardPosition localPosition =
         match localPosition with

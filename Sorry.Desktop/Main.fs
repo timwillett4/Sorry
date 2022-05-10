@@ -179,6 +179,10 @@ let view (state: State) (dispatch: Msg -> unit) =
         |> List.concat
         
     let pawns =
+        let boardPosition = result {
+            let! gameState = state.gameState
+            return! gameState |> GameState.getTokenPositions
+        }
         let toColorString color =
             match color with
             | Color.Red -> "Red"
@@ -186,91 +190,14 @@ let view (state: State) (dispatch: Msg -> unit) =
             | Color.Blue -> "Blue"
             | Color.Yellow -> "Yellow"
             | _ -> failwith "Invalid enum"
-            
-        let toBoardPos boardPos (pawn:Pawn) =
-            match boardPos, pawn.Color with
-            | Outer(Color.Green, outerCoord), _ when outerCoord |> int <= 11 ->
-               (11.0 - (outerCoord |> double), 15.0)
-            | Outer(Color.Green, outerCoord), _ when outerCoord |> int >= 12 ->
-               (0, 26.0 - (outerCoord |> double))
-            | Outer(Color.Red, outerCoord), _ when outerCoord |> int <= 11 ->
-               (0.0, 11.0 - (outerCoord |> double))
-            | Outer(Color.Red, outerCoord), _ when outerCoord |> int >= 12->
-               (0.0, 1.0 + (outerCoord |> int - 11))
-            | Outer(Color.Blue, outerCoord), _ when outerCoord |> int <= 11 ->
-               ((outerCoord |> double) + 4.0, 0.0)
-            | Outer(Color.Blue, outerCoord), _ when outerCoord |> int >= 12 ->
-               (15.0, 1.0 + outerCoord |> int - 11)
-            | Outer(Color.Yellow, outerCoord), _ when outerCoord |> int <= 11 ->
-               (15.0, (outerCoord |> double) + 4.0)
-            | Outer(Color.Yellow, outerCoord), _ when outerCoord |> int >= 12 ->
-               (14.0, 26.0 - outerCoord)
-            | BoardPosition.Safety(safetySquare), Color.Green ->
-                (13, 15 - safetySquare |> double)
-            | BoardPosition.Safety(safetySquare), Color.Red ->
-                (safetySquare |> double, 13)
-            | BoardPosition.Safety(safetySquare), Color.Blue ->
-                (2, safetySquare |> double)
-            | BoardPosition.Safety(safetySquare), Color.Yellow ->
-                (15 - safetySquare |> double, 2)
-            | BoardPosition.Start, Color.Green ->
-                match pawn.ID with
-                | PawnID.One -> (10.5,13.0)
-                | PawnID.Two -> (11.5,13.0)
-                | PawnID.Three -> (10.5,14.0)
-            | BoardPosition.Home, Color.Green ->
-                match pawn.ID with
-                | PawnID.One -> (12.5,8)
-                | PawnID.Two -> (13.5,8)
-                | PawnID.Three -> (13.5,9)
-            | BoardPosition.Start, Color.Red ->
-                match pawn.ID with
-                | PawnID.One -> (1,10.5)
-                | PawnID.Two -> (2,10.5)
-                | PawnID.Three -> (1,11.5)
-            | BoardPosition.Home, Color.Red ->
-                match pawn.ID with
-                | PawnID.One -> (6,12.5)
-                | PawnID.Two -> (7,12.5)
-                | PawnID.Three -> (6,13.5)
-            | BoardPosition.Start, Color.Blue ->
-                match pawn.ID with
-                | PawnID.One -> (3.5, 1.0)
-                | PawnID.Two -> (4.5, 1.0)
-                | PawnID.Three -> (3.5, 2.0)
-            | BoardPosition.Home, Color.Blue ->
-                match pawn.ID with
-                | PawnID.One -> (1.5, 6.0)
-                | PawnID.Two -> (2.5, 6.0)
-                | PawnID.Three -> (1.5, 7.0)
-            | BoardPosition.Start, Color.Yellow ->
-                match pawn.ID with
-                | PawnID.One -> (13, 3.5)
-                | PawnID.Two -> (14, 3.5)
-                | PawnID.Three -> (13, 4.5)
-            | BoardPosition.Home, Color.Yellow ->
-                match pawn.ID with
-                | PawnID.One -> (8, 1.5)
-                | PawnID.Two -> (9, 1.5)
-                | PawnID.Three -> (8, 2.5)
-            // @TODO - safety
-            | _ -> failwith "Invalid boardPos"
-        let boardPosition = result {
-            let! gameState = state.gameState
-            return! gameState |> GameState.getTokenPositions
-        }
         match boardPosition with
         | Ok(boardPosition) ->
             boardPosition
             |> Map.toList
-            |> List.map (fun (p, pos) -> createPawn (p.Color |> toColorString) ((pos,p) ||> toBoardPos))
+            |> List.map (fun (p, pos) -> createPawn (p.Color |> toColorString) ((pos,p) ||> Presentation.toScreenCoords))
             |> List.concat
         | _ -> failwith "Unimplemented"
         
-    (*let pawns =
-        [ createPawn "Red" (5,0)
-          createPawn "Yellow" (0, 0) ]
-        |> List.concat *)
     Canvas.create [
         Canvas.background "Aqua"
         Canvas.children (outerSquares@safetySquares@startCircles@homeCircles@boostArrows@pawns)]
