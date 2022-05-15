@@ -8,8 +8,10 @@
     <Compile Include="DomainTypes.fs" />
     <Compile Include="GameState.fs" />
     <Compile Include="Presentation.fs" />
+    <Compile Include="Display.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FSharp.Core" Version="6.0.4" />
     <PackageReference Include="FSharpLint.Core" Version="0.12.10" />
   </ItemGroup>
   <ItemGroup>

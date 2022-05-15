@@ -7,6 +7,7 @@ open Avalonia.FuncUI.Types
 open Avalonia.FuncUI
 open Avalonia.FuncUI.DSL
 open Avalonia.Layout
+open Internal.Utilities.StructuredFormat
 open Sorry.Core
 
 type State = {
@@ -22,13 +23,12 @@ open FSharp.Core.Extensions.Result
 let random = Random()
 let getRandom() =
     random.Next(Int32.MaxValue)
-
 let initialState() =
     let game = result {
         
         let game = GameState.newGame
         let! game = game |> GameState.tryAddPlayer "Levi" Color.Green
-        let! game = game |> GameState.tryAddPlayer "Corbin" Color.Red
+       // let! game = game |> GameState.tryAddPlayer "Corbin" Color.Red
         let! game = game |> GameState.tryAddPlayer "Tim" Color.Blue
         
         return! game |> GameState.tryStartGame getRandom
@@ -41,8 +41,46 @@ let initialState() =
 type Msg =
 | ChooseAction of DomainTypes.Action
 
+let actionText action =
+    let pawnText (pawn:Pawn) =
+        let colorText color =
+           match color with
+           | Color.Green -> "Green"
+           | Color.Red -> "Red"
+           | Color.Blue -> "Blue"
+           | Color.Yellow -> "Yellow"
+           | _ -> failwith "Invalid pawn color"
+        let IDText id =
+           match id with
+           | PawnID.One -> "One"
+           | PawnID.Two -> "Two"
+           | PawnID.Three -> "Three"
+        (pawn.Color |> colorText) + "-" + (pawn.ID |> IDText)
+    match action with
+    | DomainTypes.Action.Sorry(pawnOnStart, pawnToBump) ->
+        $"Sorry: Move %s{pawnOnStart |> pawnText} out of start and send %s{pawnToBump |> pawnText} back to start"
+    | DomainTypes.Action.DrawCard ->
+        "Draw a card"
+    | DomainTypes.Action.MovePawn(pawn, spaces) ->
+        $"Move pawn %s{pawn |> pawnText} %i{spaces} spaces"
+    | DomainTypes.Action.PassTurn ->
+        "Pass turn"
+    | DomainTypes.Action.SplitMove7((pawn1, move1), (pawn2, move2)) ->
+        $"Move pawn %s{pawn1 |> pawnText} %i{move1} spaces and %s{pawn2 |> pawnText} %i{move2} spaces"
+    | DomainTypes.Action.SwitchPawns(pawn1, pawn2) ->
+        $"Switch %s{pawn1 |> pawnText} with %s{pawn2 |> pawnText}"
+let gameID = System.DateTime.Now.ToString("s").Replace(":","_");
 let update (msg: Msg) (state: State) : State * Elmish.Cmd<_>=
-    let chooseAction = GameState.tryChooseAction getRandom
+    let logger game action =
+        
+        //let game = System.Text.Json.JsonSerializer.Serialize game
+        //let action = System.Text.Json.JsonSerializer.Serialize action
+        //System.IO.File.AppendAllText($"GameLog%s{gameID}.txt", game + Environment.NewLine)
+        let game = game |> Display.printBoardState
+        System.IO.File.AppendAllText($"GameLog_{gameID}.txt", game + Environment.NewLine)
+        let action = action |> actionText
+        System.IO.File.AppendAllText($"GameLog_{gameID}.txt", Environment.NewLine + "Chose Action: " + action + Environment.NewLine + Environment.NewLine)
+    let chooseAction = GameState.tryChooseAction getRandom logger
     match msg with
     | ChooseAction(action) ->
         match state.gameState |> chooseAction action with
@@ -236,11 +274,11 @@ let view (state: State) (dispatch: Msg -> unit) =
         [ createArrow (14, 15) (11, 15) "Green"
           createArrow (6, 15) (2, 15) "Green"
           createArrow (0, 14) (0, 11) "Red"
-          createArrow (0, 7) (0, 3) "Red"
+          createArrow (0, 6) (0, 2) "Red"
           createArrow (1, 0) (4, 0) "Blue"
-          createArrow (10, 0) (14, 0) "Blue"
+          createArrow (9, 0) (13, 0) "Blue"
           createArrow (15, 1) (15, 4) "Yellow"
-          createArrow (15, 10) (15, 14) "Yellow" ]
+          createArrow (15, 9) (15, 13) "Yellow" ]
         |> List.concat
         
     let pawns =
@@ -257,34 +295,6 @@ let view (state: State) (dispatch: Msg -> unit) =
         |> List.concat
     
     let actionListView (state:State) dispatch =
-        let actionText action =
-            let pawnText (pawn:Pawn) =
-                let colorText color =
-                   match color with
-                   | Color.Green -> "Green"
-                   | Color.Red -> "Red"
-                   | Color.Blue -> "Blue"
-                   | Color.Yellow -> "Yellow"
-                   | _ -> failwith "Invalid pawn color"
-                let IDText id =
-                   match id with
-                   | PawnID.One -> "One"
-                   | PawnID.Two -> "Two"
-                   | PawnID.Three -> "Three"
-                (pawn.Color |> colorText) + "-" + (pawn.ID |> IDText)
-            match action with
-            | DomainTypes.Action.Sorry(pawnOnStart, pawnToBump) ->
-                $"Sorry: Move %s{pawnOnStart |> pawnText} out of start and send %s{pawnToBump |> pawnText} back to start"
-            | DomainTypes.Action.DrawCard ->
-                "Draw a card"
-            | DomainTypes.Action.MovePawn(pawn, spaces) ->
-                $"Move pawn %s{pawn |> pawnText} %i{spaces} spaces"
-            | DomainTypes.Action.PassTurn ->
-                "Pass turn"
-            | DomainTypes.Action.SplitMove7((pawn1, move1), (pawn2, move2)) ->
-                $"Move pawn %s{pawn1 |> pawnText} %i{move1} spaces and %s{pawn2 |> pawnText} %i{move2} spaces"
-            | DomainTypes.Action.SwitchPawns(pawn1, pawn2) ->
-                $"Switch %s{pawn1 |> pawnText} with %s{pawn2 |> pawnText}"
                 
         ListBox.create [
             ListBox.dock Dock.Left
@@ -323,14 +333,23 @@ let view (state: State) (dispatch: Msg -> unit) =
                 TextBlock.text $"Active player: %A{activePlayer}"
                 TextBlock.fontWeight FontWeight.Bold
                 TextBlock.margin 5.0
-        ]
+        ] : IView
     let drawnCardView (drawnCard:Card) =
         TextBlock.create [
                 Border.dock Dock.Top
                 TextBlock.text $"Drawn card: %A{drawnCard}"
                 TextBlock.fontWeight FontWeight.Bold
                 TextBlock.margin 5.0
-        ]
+        ] : IView
+        
+    let winnerView (winner:Player) =
+        TextBlock.create [
+                Border.dock Dock.Top
+                TextBlock.text $"%A{winner} is the winner"
+                TextBlock.fontWeight FontWeight.Bold
+                TextBlock.margin 5.0
+        ] :> IView
+        
     SplitView.create [
         Grid.row 2
 
@@ -347,21 +366,24 @@ let view (state: State) (dispatch: Msg -> unit) =
         ]
         |> SplitView.content
 
-        let activePlayer = state.gameState |> GameState.getActivePlayer
-        let drawnCard = state.gameState |> GameState.getDrawnCard
         let paneContent =
-            match (activePlayer,drawnCard) with
-            | Some(activePlayer), Some(card) -> [
-                   (activePlayerView activePlayer) :> IView
-                   (drawnCardView card) :> IView
-                   (actionListView state dispatch) :> IView
-                ]
-            | Some(activePlayer), None -> [
-                   (activePlayerView activePlayer) :> IView
-                   (actionListView state dispatch) :> IView
-                ]
-            | None, Some(_) -> failwith "Invalid state"
-            | None,None -> [actionListView state dispatch]
+            match state.gameState with
+            | GameOver(game) -> [winnerView game.Winner]
+            | _ -> 
+                let activePlayer = state.gameState |> GameState.getActivePlayer
+                let drawnCard = state.gameState |> GameState.getDrawnCard
+                match (activePlayer,drawnCard) with
+                | Some(activePlayer), Some(card) -> [
+                       (activePlayerView activePlayer) 
+                       (drawnCardView card) 
+                       (actionListView state dispatch) 
+                    ]
+                | Some(activePlayer), None -> [
+                       (activePlayerView activePlayer) 
+                       (actionListView state dispatch) 
+                    ]
+                | None, Some(_) -> failwith "Invalid state"
+                | None,None -> [actionListView state dispatch]
         StackPanel.create [
             StackPanel.dock Dock.Top
             StackPanel.orientation Orientation.Vertical

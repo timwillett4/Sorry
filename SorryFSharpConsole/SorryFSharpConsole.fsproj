@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Display.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
@@ -16,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentColorConsole" Version="2.0.1" />
-    <PackageReference Update="FSharp.Core" Version="6.0.4-beta.22181.2" />
+    <PackageReference Update="FSharp.Core" Version="6.0.4" />
   </ItemGroup>
 
 </Project>

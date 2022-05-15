@@ -2,7 +2,7 @@
 open System
 open Sorry.Core
 open FSharp.Core.Extensions.Result
-open SorryFSharpConsole.Display
+open Sorry.Core.Display
 
 [<EntryPoint>]
 let main argv =
@@ -71,10 +71,11 @@ let main argv =
         result {
             
             let availableActions = game |> GameState.getAvailableActions
-            printBoardState game availableActions |> ignore
+            (printBoardState game) |> printf "%s"
             let actionChoice = getActionChoice readChar availableActions.Length
-            
-            let! game = game |> GameState.tryChooseAction random availableActions.[actionChoice]
+           
+            let log game action = () 
+            let! game = game |> GameState.tryChooseAction random log availableActions.[actionChoice]
             // @TODO - check win condition (match game state end on game over recurse on others?)
             
             return! gameLoop game

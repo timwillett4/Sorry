@@ -1,6 +1,5 @@
-﻿module SorryFSharpConsole.Display
+﻿module Sorry.Core.Display
 
-open FSharp.Core.Extensions.Result
 open System
 open Sorry.Core
 
@@ -110,41 +109,40 @@ let drawBoard tokenPositions =
     [0..15] |> List.iter (fun _ -> drawRow())
     [0..15] |> List.iter (fun _ -> drawBorder())
 
-let rec printBoardState game availableActions =
+
+let printBoardState (game:GameState) =
+    let availableActions = game |> GameState.getAvailableActions
     
     let printTokenPosition tokenPosition =
-       printfn "Board State:"
-       tokenPosition |> Map.iter (fun (pawn:Pawn) position -> printfn $"[%A{pawn.Color}] Token %A{pawn.ID} is at board position: %A{position}")
-       printfn ""
+       let boardState = (tokenPosition |> Map.fold (fun str (pawn:Pawn) position -> str + $"[%A{pawn.Color}] Token %A{pawn.ID} is at board position: %A{position}" + Environment.NewLine) "")
+       "Board State:" + Environment.NewLine + boardState + Environment.NewLine
 
-    let rec printActivePlayer activePlayer =
-        printfn $"Active Player: %A{activePlayer}"
-        printfn ""
+    let printActivePlayer activePlayer =
+       $"Active Player: %A{activePlayer}" + Environment.NewLine
        
     let printDrawnCard card =
         match card with
         | Some(card) ->
-            printfn $"Drawn Card: %A{card}"
-            printfn ""
-        | None -> ()
+            $"Drawn Card: %A{card}" + Environment.NewLine
+        | None -> ""
         
-    let printAvailableActions availableActions =
-        printfn "Available Actions:"
-        availableActions
-        |> List.iteri (fun i action -> printfn $"Action[%i{i}]: %A{action}")
-        printfn ""
+    let printAvailableActions (availableActions:Action list) =
+        let actions = availableActions |> List.mapi(fun i action -> (i, action))
+        let actions = List.fold (fun str (i:int, action:Action) -> str + $"Action[%i{i}]: %A{action}" + Environment.NewLine) "" actions 
+        "Available Actions: " + actions + Environment.NewLine
 
-    result {
-        let tokenPositions = game |> GameState.getTokenPositions
-        let activePlayer = game |> GameState.getActivePlayer
-        let drawnCard = game |> GameState.getDrawnCard 
-        
-        tokenPositions |> printTokenPosition
-        
+    let tokenPositions = game |> GameState.getTokenPositions
+    let activePlayer = game |> GameState.getActivePlayer
+    let drawnCard = game |> GameState.getDrawnCard 
+    
+    let activePlayer =
         match activePlayer with
         | Some(activePlayer) -> activePlayer |> printActivePlayer
-        | None -> ()
+        | None -> ""
         
-        drawnCard |> printDrawnCard
-        availableActions |> printAvailableActions
-    }
+    let tokenPositions = tokenPositions |> printTokenPosition
+    
+    let drawnCard = drawnCard |> printDrawnCard
+    let actions = availableActions |> printAvailableActions
+    
+    activePlayer + tokenPositions + drawnCard + actions

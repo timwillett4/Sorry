@@ -301,7 +301,9 @@ let tryDrawCard random game =
         Ok(ChoosingAction({BoardState={gameState with Deck=newDeck};DrawnCard=drawnCard}))
     | _ -> Error(game, "Can only draw a card when game is in draw state")
 
-let tryChooseAction random action game =
+let tryChooseAction random logger action game =
+    
+    logger game action  
     
     let updateActivePlayer gameState =
        assert(gameState.Players |> List.contains gameState.ActivePlayer)

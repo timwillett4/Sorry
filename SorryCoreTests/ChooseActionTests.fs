@@ -8,7 +8,8 @@ open Sorry.Core
 let getAvailableActionTests =
     
     let random0 = fun () -> 0
-    let tryChooseAction = GameState.tryChooseAction random0
+    let stubLogger game action = () 
+    let tryChooseAction = GameState.tryChooseAction random0 stubLogger
     
     testList "Choose action tests" [
         let levi = {Name="Levi"; Color=Color.Green}
