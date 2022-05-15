@@ -432,7 +432,7 @@ let getAvailableActionTests =
                        Deck = newDeck
                        Players = [levi;dad]
                        TokenPositions = [
-                           GreenPawn1, BoardPosition.Home
+                           GreenPawn1, BoardPosition.Safety(SafetySquare.Four)
                            GreenPawn2, BoardPosition.Safety(SafetySquare.Five)
                            GreenPawn3, BoardPosition.Home
                            

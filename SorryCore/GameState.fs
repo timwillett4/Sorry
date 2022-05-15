@@ -116,24 +116,24 @@ let getAvailableActions game =
             | Outer _ -> true
             | _ -> false
         
+        let isValidMove moveIncrement (pawn:Pawn, position) =
+            let ownPawnIsNotOnMoveToSquare (pawn:Pawn, moveToSquare) =
+                let pieceIsOnMoveToSquare =
+                    boardPositions |> Map.tryFindKey (fun pawn position -> pawn.Color = activeColor && position = moveToSquare)
+                match pieceIsOnMoveToSquare with
+                | Some _ -> false
+                | None -> true
+            let moveToSquare = position |> positionAheadOfCurrentBy moveIncrement pawn.Color
+            match moveToSquare with
+            | None -> false
+            | Some(moveToSquare) when moveToSquare = Home -> true
+            | Some(moveToSquare) -> ownPawnIsNotOnMoveToSquare (pawn, moveToSquare)
+            
         let canMoveAnyPiece predicate moveIncrement =
-            let isValidMove (pawn:Pawn, position) =
-                let ownPawnIsNotOnMoveToSquare (pawn:Pawn, moveToSquare) =
-                    let pieceIsOnMoveToSquare =
-                        boardPositions |> Map.tryFindKey (fun pawn position -> pawn.Color = activeColor && position = moveToSquare)
-                    match pieceIsOnMoveToSquare with
-                    | Some _ -> false
-                    | None -> true
-                let moveToSquare = position |> positionAheadOfCurrentBy moveIncrement pawn.Color
-                match moveToSquare with
-                | None -> false
-                | Some(moveToSquare) when moveToSquare = Home -> true
-                | Some(moveToSquare) -> ownPawnIsNotOnMoveToSquare (pawn, moveToSquare)
-                   
             boardPositions
             |> Map.toList
             |> List.filter (fun (pawn, position) -> pawn.Color = activeColor && position |> predicate)
-            |> List.filter isValidMove 
+            |> List.filter (isValidMove moveIncrement)
             |> List.map (fun (pawn, _) -> Action.MovePawn(pawn, moveIncrement))
             
         let canMoveAnyPieceOutOfStart = canMoveAnyPiece (fun position -> position = Start) 1
@@ -175,11 +175,11 @@ let getAvailableActions game =
             ||> List.allPairs
             |> List.map Action.Sorry
             
-        let canSplitMove7WithAny2PiecesNotOnStart =
+        let canSplitMove7WithAny2PiecesNotOnStartOrHome =
             let splits = [(1,6);(2,5);(3,4);(4,3);(5,2);(6,1)]
             
             let pawnsEligibleToMove = boardPositions
-                                       |> Map.filter (fun pawn position -> pawn.Color = activeColor && position <> Start)
+                                       |> Map.filter (fun pawn position -> pawn.Color = activeColor && position <> Start && position <> Home)
                                        |> Map.toList
                                        |> List.map fst
             
@@ -193,14 +193,21 @@ let getAvailableActions game =
             (pieceSplits, splits)
             ||> List.allPairs
             |> List.map (fun ((pawn1, pawn2),(move1, move2)) -> SplitMove7((pawn1,move1),(pawn2,move2)))
-
+            |> List.filter (fun split ->
+                match split with
+                | SplitMove7((pawn1, move1), (pawn2, move2)) ->
+                    let pos1 = boardPositions.[pawn1]
+                    let pos2 = boardPositions.[pawn2]
+                    (isValidMove move1 (pawn1, pos1)) && (isValidMove move2 (pawn2, pos2))
+                | _ -> failwith "Unexpected move")
+                       
         let actions = match game.DrawnCard with
                       | Card.One ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStartOrHome 1)
                       | Card.Two ->canMoveAnyPieceOutOfStart@(canMoveAnyPieceNotOnStartOrHome 2)
                       | Card.Three -> canMoveAnyPieceNotOnStartOrHome 3
                       | Card.Four -> canMoveAnyPieceNotOnStartOrHome -4
                       | Card.Five -> canMoveAnyPieceNotOnStartOrHome 5
-                      | Card.Seven -> (canMoveAnyPieceNotOnStartOrHome 7)@canSplitMove7WithAny2PiecesNotOnStart
+                      | Card.Seven -> (canMoveAnyPieceNotOnStartOrHome 7)@canSplitMove7WithAny2PiecesNotOnStartOrHome
                       | Card.Eight -> canMoveAnyPieceNotOnStartOrHome 8
                       | Card.Ten -> (canMoveAnyPieceNotOnStartOrHome 10)@(canMoveAnyPieceNotOnStartOrHome -1)
                       | Card.Eleven -> (canMoveAnyPieceNotOnStartOrHome 11)@canSwitchPlacesWithOpponentNotOnStartHomeOrSafety
