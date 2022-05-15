@@ -18,23 +18,20 @@ type State = {
 open System
 open FSharp.Core.Extensions.Result
 
+
+let random = Random()
+let getRandom() =
+    random.Next(Int32.MaxValue)
+
 let initialState() =
-    let levi = {Color=Color.Green; Name = "Levi"}
-    let corbin = {Color=Color.Yellow; Name = "Corbin"}
-    let micah = {Color=Color.Blue; Name = "Micah"}
-    let barrett = {Color=Color.Red; Name = "Barrett"}
-    
     let game = result {
-        let random = Random()
-        let random() = random.Next(Int32.MaxValue)
         
         let game = GameState.newGame
         let! game = game |> GameState.tryAddPlayer "Levi" Color.Green
-        let! game = game |> GameState.tryAddPlayer "Corbin" Color.Yellow
-        let! game = game |> GameState.tryAddPlayer "Micah" Color.Blue
-        let! game = game |> GameState.tryAddPlayer "Barrett" Color.Red
+        let! game = game |> GameState.tryAddPlayer "Corbin" Color.Red
+        let! game = game |> GameState.tryAddPlayer "Tim" Color.Blue
         
-        return! game |> GameState.tryStartGame random
+        return! game |> GameState.tryStartGame getRandom
     }
     
     match game with
@@ -45,8 +42,7 @@ type Msg =
 | ChooseAction of DomainTypes.Action
 
 let update (msg: Msg) (state: State) : State * Elmish.Cmd<_>=
-    let random = Random()
-    let chooseAction = GameState.tryChooseAction random.Next
+    let chooseAction = GameState.tryChooseAction getRandom
     match msg with
     | ChooseAction(action) ->
         match state.gameState |> chooseAction action with
@@ -143,11 +139,72 @@ let view (state: State) (dispatch: Msg -> unit) =
         
         boostLine@[endCircle]
     
-    let createPawn (color:string) (x, y) =
+    let createPawn (color:string) pawnID (x, y) =
         let pawnTop = createEllipse 0.4 0.4 (x + 0.3) (y) color
         let pawnNeck = createEllipse 0.3 0.5 (x + 0.35) (y + 0.3) color
         let pawnBase = createEllipse 0.8 0.4 (x + 0.1) (y + 0.6) color
-        [ pawnBase; pawnNeck; pawnTop ]
+        let pawnID = match pawnID with
+                     | PawnID.One -> [
+                            Line.create [
+                                let left,top = toScreenCoords borderWidth squareWidth x y
+                                Line.startPoint (left + (squareWidth/2.0), top + 20.0)
+                                Line.endPoint (left + (squareWidth/2.0), top + 30.0)
+                                Line.strokeLineCap PenLineCap.Round
+                                Line.strokeJoinCap PenLineJoin.Bevel
+                                Line.stroke "Black"
+                                Line.strokeThickness 2.0
+                            ] :> IView
+                        ]
+                     | PawnID.Two -> [
+                            Line.create [
+                                let left,top = toScreenCoords borderWidth squareWidth x y
+                                Line.startPoint (left + (squareWidth/2.0) - 5.0, top + 20.0)
+                                Line.endPoint (left + (squareWidth/2.0) - 5.0, top + 30.0)
+                                Line.strokeLineCap PenLineCap.Round
+                                Line.strokeJoinCap PenLineJoin.Bevel
+                                Line.stroke "Black"
+                                Line.strokeThickness 2.0
+                            ] :> IView
+                            Line.create [
+                                let left,top = toScreenCoords borderWidth squareWidth x y
+                                Line.startPoint (left + (squareWidth/2.0 + 5.0), top + 20.0)
+                                Line.endPoint (left + (squareWidth/2.0 + 5.0), top + 30.0)
+                                Line.strokeLineCap PenLineCap.Round
+                                Line.strokeJoinCap PenLineJoin.Bevel
+                                Line.stroke "Black"
+                                Line.strokeThickness 2.0
+                            ] :> IView
+                        ]
+                        | PawnID.Three -> [
+                                Line.create [
+                                    let left,top = toScreenCoords borderWidth squareWidth x y
+                                    Line.startPoint (left + (squareWidth/2.0) - 5.0, top + 20.0)
+                                    Line.endPoint (left + (squareWidth/2.0) - 5.0, top + 30.0)
+                                    Line.strokeLineCap PenLineCap.Round
+                                    Line.strokeJoinCap PenLineJoin.Bevel
+                                    Line.stroke "Black"
+                                    Line.strokeThickness 2.0
+                                ] :> IView
+                                Line.create [
+                                    let left,top = toScreenCoords borderWidth squareWidth x y
+                                    Line.startPoint (left + (squareWidth/2.0), top + 20.0)
+                                    Line.endPoint (left + (squareWidth/2.0), top + 30.0)
+                                    Line.strokeLineCap PenLineCap.Round
+                                    Line.strokeJoinCap PenLineJoin.Bevel
+                                    Line.stroke "Black"
+                                    Line.strokeThickness 2.0
+                                ] :> IView
+                                Line.create [
+                                    let left,top = toScreenCoords borderWidth squareWidth x y
+                                    Line.startPoint (left + (squareWidth/2.0 + 5.0), top + 20.0)
+                                    Line.endPoint (left + (squareWidth/2.0 + 5.0), top + 30.0)
+                                    Line.strokeLineCap PenLineCap.Round
+                                    Line.strokeJoinCap PenLineJoin.Bevel
+                                    Line.stroke "Black"
+                                    Line.strokeThickness 2.0
+                                ] :> IView
+                            ]
+        [pawnBase; pawnNeck; pawnTop]@pawnID
         
     let outerSquares =
         [ ([0..15],[0])
@@ -196,7 +253,7 @@ let view (state: State) (dispatch: Msg -> unit) =
             | _ -> failwith "Invalid enum"
         state.gameState |> GameState.getTokenPositions
         |> Map.toList
-        |> List.map (fun (p, pos) -> createPawn (p.Color |> toColorString) ((pos,p) ||> Presentation.toScreenCoords))
+        |> List.map (fun (p, pos) -> createPawn (p.Color |> toColorString) (p.ID) ((pos,p) ||> Presentation.toScreenCoords))
         |> List.concat
     
     let actionListView (state:State) dispatch =
@@ -281,8 +338,8 @@ let view (state: State) (dispatch: Msg -> unit) =
         SplitView.panePlacement SplitViewPanePlacement.Left
         SplitView.useLightDismissOverlayMode false 
         SplitView.isPaneOpen true 
-        SplitView.openPaneLength 300.0 
-        SplitView.compactPaneLengthProperty  300.0
+        SplitView.openPaneLength 500.0 
+        SplitView.compactPaneLengthProperty  500.0
 
         Canvas.create [
             Canvas.background "Aqua"
