@@ -924,6 +924,34 @@ let getAvailableActionTests =
                     Expect.equal availableActions expectedActions "Expected to only be able to move pawns not on home"
                 }
                 
+                test "Can not be bumped when on safety row" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               GreenPawn1, BoardPosition.Outer(Color.Yellow, OuterCoordinate.Fourteen)
+                               GreenPawn2, BoardPosition.Start
+                               GreenPawn3, BoardPosition.Start
+                               
+                               // Red 14 = 1 away from safety square
+                               BluePawn1, BoardPosition.Safety(SafetySquare.One)
+                               BluePawn2, BoardPosition.Start
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = levi
+                    }
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.One }
+                    let bluePawn1Pos = result {
+                        let! game = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
+                        let tokenPositions = game |> GameState.getTokenPositions
+                        return tokenPositions.[BluePawn1]
+                    } 
+                    
+                    Expect.equal bluePawn1Pos (Ok(BoardPosition.Safety(SafetySquare.One))) "Expected blue pawn 1 to not be bumped"
+                }
+                
                 test "Must get exact count to get home" {
                     
                     let boardState = {

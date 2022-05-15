@@ -303,7 +303,12 @@ let tryChooseAction random action game =
        {gameState with ActivePlayer=gameState.Players.[nextIndex]}
                          
     let sendPawnBackToStartIfOnPosition (position:BoardPosition) (tokenPositions:TokenPositions) =
-        let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ p -> p = position && position <> Home)
+        let opponentToBump = tokenPositions |> Map.tryFindKey (fun _ p ->
+            match p with
+            | Home -> false
+            | Safety _ -> false 
+            | p when p = position -> true
+            | _ -> false)
                                 
         match opponentToBump with
         | Some(pawn) -> tokenPositions |> Map.add pawn Start
