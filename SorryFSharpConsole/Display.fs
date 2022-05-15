@@ -136,11 +136,15 @@ let rec printBoardState game availableActions =
 
     result {
         let tokenPositions = game |> GameState.getTokenPositions
-        let! activePlayer = game |> GameState.getActivePlayer
+        let activePlayer = game |> GameState.getActivePlayer
         let drawnCard = game |> GameState.getDrawnCard 
         
         tokenPositions |> printTokenPosition
-        activePlayer |> printActivePlayer
+        
+        match activePlayer with
+        | Some(activePlayer) -> activePlayer |> printActivePlayer
+        | None -> ()
+        
         drawnCard |> printDrawnCard
         availableActions |> printAvailableActions
     }

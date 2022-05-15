@@ -2,6 +2,7 @@
 
 open Avalonia.Controls
 open Avalonia.Controls.Shapes
+open Avalonia.Media
 open Avalonia.FuncUI.Types
 open Avalonia.FuncUI
 open Avalonia.FuncUI.DSL
@@ -258,7 +259,21 @@ let view (state: State) (dispatch: Msg -> unit) =
                 )                  
             )
         ]
-        
+    
+    let activePlayerView (activePlayer:Player) =
+        TextBlock.create [
+                Border.dock Dock.Top
+                TextBlock.text $"Active player: %A{activePlayer}"
+                TextBlock.fontWeight FontWeight.Bold
+                TextBlock.margin 5.0
+        ]
+    let drawnCardView (drawnCard:Card) =
+        TextBlock.create [
+                Border.dock Dock.Top
+                TextBlock.text $"Drawn card: %A{drawnCard}"
+                TextBlock.fontWeight FontWeight.Bold
+                TextBlock.margin 5.0
+        ]
     SplitView.create [
         Grid.row 2
 
@@ -269,13 +284,32 @@ let view (state: State) (dispatch: Msg -> unit) =
         SplitView.openPaneLength 300.0 
         SplitView.compactPaneLengthProperty  300.0
 
-
         Canvas.create [
             Canvas.background "Aqua"
             Canvas.children (outerSquares@safetySquares@startCircles@homeCircles@boostArrows@pawns)
         ]
         |> SplitView.content
 
-        actionListView state dispatch
+        let activePlayer = state.gameState |> GameState.getActivePlayer
+        let drawnCard = state.gameState |> GameState.getDrawnCard
+        let paneContent =
+            match (activePlayer,drawnCard) with
+            | Some(activePlayer), Some(card) -> [
+                   (activePlayerView activePlayer) :> IView
+                   (drawnCardView card) :> IView
+                   (actionListView state dispatch) :> IView
+                ]
+            | Some(activePlayer), None -> [
+                   (activePlayerView activePlayer) :> IView
+                   (actionListView state dispatch) :> IView
+                ]
+            | None, Some(_) -> failwith "Invalid state"
+            | None,None -> [actionListView state dispatch]
+        StackPanel.create [
+            StackPanel.dock Dock.Top
+            StackPanel.orientation Orientation.Vertical
+            StackPanel.margin 10.0
+            StackPanel.children paneContent 
+        ]
         |> SplitView.pane
     ]

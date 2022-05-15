@@ -98,14 +98,14 @@ let startGameTests =
                 let! game2 = gameSetup |> GameState.tryStartGame fakeRandomNumberGenerator1
                 let! game3 = gameSetup |> GameState.tryStartGame fakeRandomNumberGenerator2
                 
-                let! activePlayer1 = game1 |> GameState.getActivePlayer
-                let! activePlayer2 = game2 |> GameState.getActivePlayer
-                let! activePlayer3 = game3 |> GameState.getActivePlayer
+                let activePlayer1 = game1 |> GameState.getActivePlayer
+                let activePlayer2 = game2 |> GameState.getActivePlayer
+                let activePlayer3 = game3 |> GameState.getActivePlayer
                 
                 return [activePlayer1;activePlayer2;activePlayer3]
             }
             
-            Expect.equal activePlayers (Ok([levi;corbin;micah])) "Expected active player to be chosen by random number"
+            Expect.equal activePlayers (Ok([Some(levi);Some(corbin);Some(micah)])) "Expected active player to be chosen by random number"
         }
     ]
     

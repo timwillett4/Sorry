@@ -97,10 +97,10 @@ let getPlayers game =
     
 let getActivePlayer game = 
     match game with
-    | Drawing(gameState) -> Ok(gameState.ActivePlayer)
-    | ChoosingAction(gameState) -> Ok(gameState.BoardState.ActivePlayer)
-    | SettingUp _ -> Error(game, "Game is still in setup state")
-    | GameOver _ -> Error(game, "Not implemented")
+    | Drawing(gameState) -> Some(gameState.ActivePlayer)
+    | ChoosingAction(gameState) -> Some(gameState.BoardState.ActivePlayer)
+    | SettingUp _ -> None
+    | GameOver(gameState) -> Some(gameState.Winner)
     
 let getAvailableActions game =
     match game with
