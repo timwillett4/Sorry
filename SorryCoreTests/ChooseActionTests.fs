@@ -406,8 +406,49 @@ let getAvailableActionTests =
                         "Expected pawn 2 to be moved forward 6 spaces to red 7"
                 }
                 
-                // 7 can not move on home
-                // Must be able to play both parts of split
+                let boardState = {
+                       Deck = newDeck
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Home
+                           GreenPawn2, BoardPosition.Home
+                           GreenPawn3, BoardPosition.Start
+                           
+                           BluePawn1, BoardPosition.Start
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Seven }
+                
+                test $"Can not use 7 when on home" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    Expect.equal availableActions [Action.PassTurn] "Expected to not be able to move pieces on home"
+                }
+                
+                let boardState = {
+                       Deck = newDeck
+                       Players = [levi;dad]
+                       TokenPositions = [
+                           GreenPawn1, BoardPosition.Home
+                           GreenPawn2, BoardPosition.Safety(SafetySquare.Five)
+                           GreenPawn3, BoardPosition.Home
+                           
+                           BluePawn1, BoardPosition.Start
+                           BluePawn2, BoardPosition.Start
+                           BluePawn3, BoardPosition.Start
+                       ] |> Map.ofList
+                       ActivePlayer = levi
+                }
+                
+                let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Seven }
+                
+                test $"Must be able to move both pieces to use split" {
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    Expect.equal availableActions [Action.PassTurn] "Expected no available turns"
+                }
             ]
             
             testList "Card 10 movement Tests" [
