@@ -1,15 +1,17 @@
 ﻿module Sorry.Desktop.Main
 
 open Avalonia.Controls
+open Avalonia.Controls.Shapes
 open Avalonia.FuncUI.Types
 open Avalonia.FuncUI
 open Avalonia.FuncUI.DSL
-open Avalonia.Controls.Shapes
-
+open Avalonia.Layout
 open Sorry.Core
 
-type State =
-    { gameState : Result<GameState, GameState*string> }
+type State = {
+  gameState : GameState
+  error : string Option
+}
     
 // TokenPositions
 open System
@@ -33,17 +35,22 @@ let initialState() =
         
         return! game |> GameState.tryStartGame random
     }
-    { gameState = game }, Elmish.Cmd.none
+    
+    match game with
+    | Ok(game) -> {gameState = game; error = None}, Elmish.Cmd.none
+    | Error(game, error) -> {gameState = game; error = Some(error)}, Elmish.Cmd.none
 
 type Msg =
-| Start
-| Stop
+| ChooseAction of DomainTypes.Action
 
 let update (msg: Msg) (state: State) : State * Elmish.Cmd<_>=
-    state, Elmish.Cmd.none
-    //match msg with
-    //| Start -> { state with state = true }, Elmish.Cmd.none
-    //| Stop -> { state with state = false }, Elmish.Cmd.none
+    let random = Random()
+    let chooseAction = GameState.tryChooseAction random.Next
+    match msg with
+    | ChooseAction(action) ->
+        match state.gameState |> chooseAction action with
+        | Ok(game) -> {gameState = game; error = None}, Elmish.Cmd.none
+        | Error(game, error) -> {gameState = game; error = Some(error)}, Elmish.Cmd.none
 
 let toScreenCoords borderWidth squareWidth x y =
     let left = borderWidth + squareWidth * x
@@ -179,10 +186,6 @@ let view (state: State) (dispatch: Msg -> unit) =
         |> List.concat
         
     let pawns =
-        let boardPosition = result {
-            let! gameState = state.gameState
-            return! gameState |> GameState.getTokenPositions
-        }
         let toColorString color =
             match color with
             | Color.Red -> "Red"
@@ -190,15 +193,60 @@ let view (state: State) (dispatch: Msg -> unit) =
             | Color.Blue -> "Blue"
             | Color.Yellow -> "Yellow"
             | _ -> failwith "Invalid enum"
-        match boardPosition with
-        | Ok(boardPosition) ->
-            boardPosition
-            |> Map.toList
-            |> List.map (fun (p, pos) -> createPawn (p.Color |> toColorString) ((pos,p) ||> Presentation.toScreenCoords))
-            |> List.concat
-        | _ -> failwith "Unimplemented"
+        state.gameState |> GameState.getTokenPositions
+        |> Map.toList
+        |> List.map (fun (p, pos) -> createPawn (p.Color |> toColorString) ((pos,p) ||> Presentation.toScreenCoords))
+        |> List.concat
+    
+    let actionListView (state:State) dispatch =
+        ListBox.create [
+            ListBox.dock Dock.Left
+            (*ListBox.onSelectedItemChanged (fun obj ->
+                match obj with
+                | :? Product as p -> p |> Some |> Select |> dispatch
+                | _ -> None |> Select |> dispatch
+            )*)
+            ListBox.dataItems (state.gameState |> GameState.getAvailableActions)
+            ListBox.itemTemplate (
+                DataTemplateView<DomainTypes.Action>.create (fun action ->
+                    DockPanel.create [
+                        DockPanel.lastChildFill false
+                        DockPanel.children [
+                            Border.create [
+                                Border.width 16.0
+                                Border.height 16.0
+                                Border.cornerRadius 8.0
+                                Border.margin 5.0
+                                //Border.background data.FavoriteColor
+                            ]
+                            Button.create [
+                                Button.horizontalAlignment HorizontalAlignment.Center
+                                Button.content $"%A{action}"
+                                Button.onClick ((fun _ -> action |> Msg.ChooseAction |> dispatch), SubPatchOptions.OnChangeOf action)
+                            ]                                         
+                        ]
+                    ]                                  
+                )                  
+            )
+        ]
         
-    Canvas.create [
-        Canvas.background "Aqua"
-        Canvas.children (outerSquares@safetySquares@startCircles@homeCircles@boostArrows@pawns)]
-        
+    SplitView.create [
+        Grid.row 2
+
+        SplitView.displayMode SplitViewDisplayMode.Inline
+        SplitView.panePlacement SplitViewPanePlacement.Left
+        SplitView.useLightDismissOverlayMode false 
+        SplitView.isPaneOpen true 
+        SplitView.openPaneLength 150.0 
+        SplitView.compactPaneLengthProperty  150.0
+
+
+        Canvas.create [
+            Canvas.background "Aqua"
+            Canvas.children (outerSquares@safetySquares@startCircles@homeCircles@boostArrows@pawns)
+        ]
+        |> SplitView.content
+
+        actionListView state dispatch
+        |> SplitView.pane
+    ]
