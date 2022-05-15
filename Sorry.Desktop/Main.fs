@@ -199,6 +199,35 @@ let view (state: State) (dispatch: Msg -> unit) =
         |> List.concat
     
     let actionListView (state:State) dispatch =
+        let actionText action =
+            let pawnText (pawn:Pawn) =
+                let colorText color =
+                   match color with
+                   | Color.Green -> "Green"
+                   | Color.Red -> "Red"
+                   | Color.Blue -> "Blue"
+                   | Color.Yellow -> "Yellow"
+                   | _ -> failwith "Invalid pawn color"
+                let IDText id =
+                   match id with
+                   | PawnID.One -> "One"
+                   | PawnID.Two -> "Two"
+                   | PawnID.Three -> "Three"
+                (pawn.Color |> colorText) + "-" + (pawn.ID |> IDText)
+            match action with
+            | DomainTypes.Action.Sorry(pawnOnStart, pawnToBump) ->
+                $"Sorry: Move %s{pawnOnStart |> pawnText} out of start and send %s{pawnToBump |> pawnText} back to start"
+            | DomainTypes.Action.DrawCard ->
+                "Draw a card"
+            | DomainTypes.Action.MovePawn(pawn, spaces) ->
+                $"Move pawn %s{pawn |> pawnText} %i{spaces} spaces"
+            | DomainTypes.Action.PassTurn ->
+                "Pass turn"
+            | DomainTypes.Action.SplitMove7((pawn1, move1), (pawn2, move2)) ->
+                $"Move pawn %s{pawn1 |> pawnText} %i{move1} spaces and %s{pawn2 |> pawnText} %i{move2} spaces"
+            | DomainTypes.Action.SwitchPawns(pawn1, pawn2) ->
+                $"Switch %s{pawn1 |> pawnText} with %s{pawn2 |> pawnText}"
+                
         ListBox.create [
             ListBox.dock Dock.Left
             (*ListBox.onSelectedItemChanged (fun obj ->
@@ -221,7 +250,7 @@ let view (state: State) (dispatch: Msg -> unit) =
                             ]
                             Button.create [
                                 Button.horizontalAlignment HorizontalAlignment.Center
-                                Button.content $"%A{action}"
+                                Button.content (action |> actionText)
                                 Button.onClick ((fun _ -> action |> Msg.ChooseAction |> dispatch), SubPatchOptions.OnChangeOf action)
                             ]                                         
                         ]
@@ -237,8 +266,8 @@ let view (state: State) (dispatch: Msg -> unit) =
         SplitView.panePlacement SplitViewPanePlacement.Left
         SplitView.useLightDismissOverlayMode false 
         SplitView.isPaneOpen true 
-        SplitView.openPaneLength 150.0 
-        SplitView.compactPaneLengthProperty  150.0
+        SplitView.openPaneLength 300.0 
+        SplitView.compactPaneLengthProperty  300.0
 
 
         Canvas.create [
