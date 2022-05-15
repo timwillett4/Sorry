@@ -45,7 +45,7 @@ let getAvailableActionTests =
                 
                 let availableActions = gameState |> GameState.getAvailableActions
                 
-                Expect.equal availableActions (Ok([Action.DrawCard])) "Expected single available action of draw card"
+                Expect.equal availableActions [Action.DrawCard] "Expected single available action of draw card"
             }
             
             test "Choosing move pawn action for an initially created game should be a invalid action" {
@@ -71,7 +71,7 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn3, 1)
                     ]
                     let availableActions = initialGameState |> GameState.getAvailableActions
-                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece from the starting position"
+                    Expect.equal availableActions expectedActions "Expected to be able to move any piece from the starting position"
                     
                 $"When a %A{card} card is drawn, moving Pawn 1 by 1 should be a valid move",
                 fun initialGameState () ->
@@ -82,7 +82,7 @@ let getAvailableActionTests =
                 fun initialGameState () ->
                     let greenPawn1Pos = result {
                         let! gameState = initialGameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
-                        let! tokenPositions = gameState |> GameState.getTokenPositions
+                        let tokenPositions = gameState |> GameState.getTokenPositions
                         
                         return tokenPositions.[GreenPawn1]
                     } 
@@ -126,7 +126,7 @@ let getAvailableActionTests =
                 $"When all pieces are in home squares and a %A{card} is drawn, the player should only be able to pass turn",
                  fun initialGameState () ->
                     let availableActions = initialGameState |> GameState.getAvailableActions
-                    Expect.equal availableActions (Ok([Action.PassTurn])) "Expected pass turn to be only action"
+                    Expect.equal availableActions [Action.PassTurn] "Expected pass turn to be only action"
                     
                  $"When all pieces are in home squares and a %A{card} is drawn, choosing pass turn action should change the active player",
                  fun initialGameState () ->
@@ -142,7 +142,7 @@ let getAvailableActionTests =
                     
                     let tokenPositions = result {
                         let! newGameState = initialGameState |> tryChooseAction Action.PassTurn
-                        return! newGameState |> GameState.getTokenPositions
+                        return newGameState |> GameState.getTokenPositions
                     }
                     Expect.equal tokenPositions (Ok(initialBoardState.TokenPositions)) "Expected token positions to not change"
                         
@@ -195,12 +195,12 @@ let getAvailableActionTests =
                             Action.MovePawn(GreenPawn2, expectedMove)
                             Action.MovePawn(GreenPawn3, expectedMove)
                             ]
-                        Expect.equal availableActions (Ok(expectedActions)) $"Expected to be able to move any piece by %A{card}"
+                        Expect.equal availableActions expectedActions $"Expected to be able to move any piece by %A{card}"
                     $"Expect token position to be updated when moving by %A{card}",
                     fun gameState () ->
                         let greenPawn1Pos = result {
                             let! newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
-                            let! tokenPositions = newGameState |> GameState.getTokenPositions
+                            let tokenPositions = newGameState |> GameState.getTokenPositions
                             return tokenPositions.[GreenPawn1]
                         }
                         Expect.equal greenPawn1Pos (Ok(expectedMoveSquare)) $"Expected pawn 1 to be moved %i{expectedMove} space to %A{expectedMoveSquare}"
@@ -245,7 +245,7 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn2, 2)
                         Action.MovePawn(GreenPawn3, 2)
                         ]
-                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece by 2"
+                    Expect.equal availableActions expectedActions "Expected to be able to move any piece by 2"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 2))
@@ -253,7 +253,7 @@ let getAvailableActionTests =
                 test $"Expect token positions to be updated when moving by 2" {
                     let greenPawn1Pos = result {
                        let! newGameState = newGameState
-                       let! tokenPositions = newGameState |> GameState.getTokenPositions
+                       let tokenPositions = newGameState |> GameState.getTokenPositions
                        return tokenPositions.[GreenPawn1]
                     }
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.Three))) "Expected pawn 1 to be moved 2 space to green 3"
@@ -294,7 +294,7 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn2, -4)
                         Action.MovePawn(GreenPawn3, -4)
                         ]
-                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece backwards 4"
+                    Expect.equal availableActions expectedActions "Expected to be able to move any piece backwards 4"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn2, -4))
@@ -302,7 +302,7 @@ let getAvailableActionTests =
                 test $"Expect token position to be updated when moving backwards 4" {
                     let greenPawn2Pos = result {
                         let! newGameState = newGameState
-                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        let tokenPositions = newGameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn2]
                     } 
                     Expect.equal greenPawn2Pos (Ok(Outer(Color.Blue, OuterCoordinate.Twelve)))
@@ -322,7 +322,7 @@ let getAvailableActionTests =
                 test $"Expect token to wrap behind first square moving backwards 4 from opening square" {
                     let greenPawn1Pos = result {
                         let! newGameState = newGameState
-                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        let tokenPositions = newGameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn1]
                     } 
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Yellow, OuterCoordinate.Twelve)))
@@ -361,7 +361,7 @@ let getAvailableActionTests =
                         Action.SplitMove7((GreenPawn1, 5), (GreenPawn2, 2))
                         Action.SplitMove7((GreenPawn1, 6), (GreenPawn2, 1))
                     ]
-                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece backwards 4"
+                    Expect.equal availableActions expectedActions "Expected to be able to move any piece backwards 4"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 7))
@@ -369,7 +369,7 @@ let getAvailableActionTests =
                 test $"Expect token position to be updated when moving pawn forward 7" {
                     let greenPawn1Pos = result {
                         let! newGameState = newGameState
-                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        let tokenPositions = newGameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn1]
                     } 
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.Eight)))
@@ -389,7 +389,7 @@ let getAvailableActionTests =
                 test $"Expect token 1 to be move forward 1 when splitting move 7 and moving pawn 1 forward 1" {
                     let greenPawn1Pos = result {
                         let! newGameState = newGameState
-                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        let tokenPositions = newGameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn1]
                     } 
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.Two)))
@@ -399,7 +399,7 @@ let getAvailableActionTests =
                 test $"Expect token 2 to be move forward 6 when splitting move 7 and moving pawn 2 forward 6" {
                     let greenPawn2Pos = result {
                         let! newGameState = newGameState
-                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        let tokenPositions = newGameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn2]
                     } 
                     Expect.equal greenPawn2Pos (Ok(Outer(Color.Red, OuterCoordinate.Seven)))
@@ -440,7 +440,7 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn3, -1)
                         ]
                     
-                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece forwards 10 or backwards 1"
+                    Expect.equal availableActions expectedActions "Expected to be able to move any piece forwards 10 or backwards 1"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn2, 10))
@@ -448,7 +448,7 @@ let getAvailableActionTests =
                 test $"Expect token position to be updated when moving forwards 10" {
                     let greenPawn1Pos = result {
                         let! newGameState = newGameState
-                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        let tokenPositions = newGameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn2]
                     }
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Yellow, OuterCoordinate.Eleven)))
@@ -467,7 +467,7 @@ let getAvailableActionTests =
                 test $"Expect token to wrap behind first square moving backwards 1 space from opening square" {
                     let greenPawn1Pos = result {
                         let! newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, -1))
-                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        let tokenPositions = newGameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn1]
                     }
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Yellow, OuterCoordinate.Fifteen)))
@@ -506,7 +506,7 @@ let getAvailableActionTests =
                         Action.SwitchPawns(GreenPawn3, BluePawn1)
                         ]
                     
-                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move any piece forwards 11 or switch with an opponents piece"
+                    Expect.equal availableActions expectedActions "Expected to be able to move any piece forwards 11 or switch with an opponents piece"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 11))
@@ -514,7 +514,7 @@ let getAvailableActionTests =
                 test $"Expect token position to be updated when moving forwards 11" {
                     let greenPawn1Pos = result {
                         let! gameState = newGameState
-                        let! tokenPositions = gameState |> GameState.getTokenPositions
+                        let tokenPositions = gameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn1]
                     } 
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.Twelve)))
@@ -534,7 +534,7 @@ let getAvailableActionTests =
                 test $"Expect green pawn 1 to move to position where blue pawn 1 was" {
                     let greenPawn1Pos = result {
                         let! gameState = newGameState
-                        let! tokenPositions = gameState |> GameState.getTokenPositions
+                        let tokenPositions = gameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn1]
                     } 
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Blue, OuterCoordinate.One)))
@@ -544,7 +544,7 @@ let getAvailableActionTests =
                 test $"Expect blue pawn 1 to move to position where green pawn 1 was" {
                     let bluePawn1Pos = result {
                         let! gameState = newGameState
-                        let! tokenPositions = gameState |> GameState.getTokenPositions
+                        let tokenPositions = gameState |> GameState.getTokenPositions
                         return tokenPositions.[BluePawn1]
                     } 
                     Expect.equal bluePawn1Pos (Ok(Outer(Color.Green, OuterCoordinate.One)))
@@ -578,7 +578,7 @@ let getAvailableActionTests =
                         Action.MovePawn(GreenPawn3, 11)
                     ]
                     
-                    Expect.equal availableActions (Ok(expectedActions)) "Expected to be able to move all pieces 11 but not switch"
+                    Expect.equal availableActions expectedActions "Expected to be able to move all pieces 11 but not switch"
                 }
                 
                 test $"If you switch with a player on a boost square, you should boost to end of slide region" {
@@ -601,7 +601,7 @@ let getAvailableActionTests =
                     
                     let greenPawn1Pos = result {
                         let! newGameState = gameState |> tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
-                        let! tokenPositions = newGameState |> GameState.getTokenPositions
+                        let tokenPositions = newGameState |> GameState.getTokenPositions
                         return tokenPositions.[GreenPawn1]
                     }
                     
@@ -632,7 +632,7 @@ let getAvailableActionTests =
                     
                     let availableActions = gameState |> GameState.getAvailableActions 
                     
-                    Expect.equal availableActions (Ok(expectedActions)) "Expected active player to ether switch or pass turn"
+                    Expect.equal availableActions expectedActions "Expected active player to ether switch or pass turn"
                 }
             ]
             
@@ -665,9 +665,7 @@ let getAvailableActionTests =
                         Action.Sorry(GreenPawn2, BluePawn2)
                     ]
 
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to be able to move any piece on start to bump opponents pawn on outer square"
-                    | Error _ -> failtest "Unexpected Error" 
+                    Expect.equal availableActions expectedActions "Expected to be able to move any piece on start to bump opponents pawn on outer square"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.Sorry(GreenPawn1, BluePawn1))
@@ -720,9 +718,7 @@ let getAvailableActionTests =
                     
                     let expectedActions = [Action.PassTurn]
                     
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected only move to be pass turn"
-                    | Error _ -> failtest "Unexpected Error" 
+                    Expect.equal availableActions expectedActions "Expected only move to be pass turn"
                 }
             ]
             
@@ -776,9 +772,7 @@ let getAvailableActionTests =
                 
                 let expectedActions = [Action.MovePawn(GreenPawn2, 1)]
                 
-                match availableActions with
-                | Ok(actions) -> Expect.equal actions expectedActions "Expected to only be able to move pawn 2 1 space"
-                | Error _ -> failtest "Unexpected Error" 
+                Expect.equal availableActions expectedActions "Expected to only be able to move pawn 2 1 space"
             }
             
             testList "Slide square tests" [
@@ -927,9 +921,7 @@ let getAvailableActionTests =
                     let availableActions = gameState |> GameState.getAvailableActions 
                     let expectedActions = [MovePawn(GreenPawn2, 1); MovePawn(GreenPawn3, 1)];
                     
-                    match availableActions with
-                    | Ok(actions) -> Expect.equal actions expectedActions "Expected to only be able to move pawns not on home"
-                    | Error _ -> failtest "Unexpected error"
+                    Expect.equal availableActions expectedActions "Expected to only be able to move pawns not on home"
                 }
                 
                 test "Must get exact count to get home" {
@@ -954,7 +946,7 @@ let getAvailableActionTests =
                     
                     let availableActions = gameState |> GameState.getAvailableActions 
                     
-                    Expect.equal availableActions (Ok[Action.PassTurn]) "Expected only move to be pass turn"
+                    Expect.equal availableActions [Action.PassTurn] "Expected only move to be pass turn"
                 }
                 
                 test "Can not move a piece backwards from home" {
@@ -979,7 +971,7 @@ let getAvailableActionTests =
                      
                      let availableActions = gameState |> GameState.getAvailableActions 
                      
-                     Expect.equal availableActions (Ok([MovePawn(GreenPawn1, -4)])) "Should not be able to move pieces on home backwards"
+                     Expect.equal availableActions [MovePawn(GreenPawn1, -4)] "Should not be able to move pieces on home backwards"
                  }
                  
                 test "Game should transition to game over state when a player gets all pieces home" {
@@ -1029,7 +1021,7 @@ let getAvailableActionTests =
                     
                     let availableActions = gameState |> GameState.getAvailableActions 
                     
-                    Expect.equal availableActions (Ok([MovePawn(GreenPawn1, -4)])) "Expected only move to be move pawn1 backwards 4"
+                    Expect.equal availableActions [MovePawn(GreenPawn1, -4)] "Expected only move to be move pawn1 backwards 4"
                 }
             ]
             

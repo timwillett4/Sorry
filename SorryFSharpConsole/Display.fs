@@ -135,7 +135,7 @@ let rec printBoardState game availableActions =
         printfn ""
 
     result {
-        let! tokenPositions = game |> GameState.getTokenPositions
+        let tokenPositions = game |> GameState.getTokenPositions
         let! activePlayer = game |> GameState.getActivePlayer
         let drawnCard = game |> GameState.getDrawnCard 
         

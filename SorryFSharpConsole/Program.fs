@@ -70,7 +70,7 @@ let main argv =
     let rec gameLoop game = 
         result {
             
-            let! availableActions = game |> GameState.getAvailableActions
+            let availableActions = game |> GameState.getAvailableActions
             printBoardState game availableActions |> ignore
             let actionChoice = getActionChoice readChar availableActions.Length
             

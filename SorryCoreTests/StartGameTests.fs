@@ -52,7 +52,7 @@ let startGameTests =
         test "There should be 3 tokens of each color" {
             let are3ofEachColor = result {
                 let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
-                let! tokens = gameState |> GameState.getTokenPositions
+                let tokens = gameState |> GameState.getTokenPositions
                 
                 let countColor color game =
                     game
@@ -68,7 +68,7 @@ let startGameTests =
         test "All pieces should start on their start square" {
             let allPiecesOnHomeSquare = result {
                 let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
-                let! tokens = gameState |> GameState.getTokenPositions
+                let tokens = gameState |> GameState.getTokenPositions
                     
                 return tokens |> Map.forall (fun _ position -> position = BoardPosition.Start)
             }

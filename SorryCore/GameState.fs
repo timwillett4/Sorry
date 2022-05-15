@@ -83,10 +83,10 @@ let getAvailableColors game =
 // @TODO convert to Option instead of result
 let getTokenPositions game = 
     match game with
-    | Drawing(gameState) -> Ok(gameState.TokenPositions)
-    | ChoosingAction(gameState) -> Ok(gameState.BoardState.TokenPositions)
-    | SettingUp _ -> Error(game, "Game is still in setup state")
-    | GameOver _ -> Error(game, "Not implemented")
+    | Drawing(gameState) -> gameState.TokenPositions
+    | ChoosingAction(gameState) -> gameState.BoardState.TokenPositions
+    | SettingUp _ -> Map.empty
+    | GameOver _ -> Map.empty // @TODO - return final state instead of empty
     
 let getPlayers game = 
     match game with
@@ -104,9 +104,9 @@ let getActivePlayer game =
     
 let getAvailableActions game =
     match game with
-    | SettingUp _ -> Error(game, "Game is still in setup state")
-    | GameOver _ -> Error(game, "Not implemented")
-    | Drawing _ -> Ok([Action.DrawCard])
+    | SettingUp _ -> [] // @TODO 
+    | GameOver _ -> []
+    | Drawing _ -> [Action.DrawCard]
     | ChoosingAction(game) ->
         let activeColor = game.BoardState.ActivePlayer.Color
         let boardPositions = game.BoardState.TokenPositions
@@ -211,9 +211,9 @@ let getAvailableActions game =
             actions |> List.forall (fun action -> match action with | SwitchPawns _ -> true | _ -> false)
             
         match actions with
-        | [] -> Ok([Action.PassTurn])
-        | switch when actions |> switchIsOnlyValidMove -> Ok(switch@[Action.PassTurn])
-        | actions -> Ok(actions)
+        | [] -> [Action.PassTurn]
+        | switch when actions |> switchIsOnlyValidMove -> switch@[Action.PassTurn]
+        | actions -> actions
         
     
 let getDrawnCard game = 
@@ -377,9 +377,8 @@ let tryChooseAction random action game =
         {gameState with TokenPositions=newTokenPositions}
         
     result {
-        let! availableActions = game |> getAvailableActions
-        
-        if availableActions |> List.contains action then
+        if game |> getAvailableActions |> List.contains action then
+            
             // Since we have validated that it is an available action we can
             // now assume all actions are valid below and just update without worry
             // of it putting game in invalid state
