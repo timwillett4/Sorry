@@ -488,26 +488,6 @@ let getAvailableActionTests =
                     Expect.equal availableActions expectedActions "Expected to be able to ove pawn3 or split with pawn1 and pawn3 or pawn2 and pawn3"
                }
             ]
-                (*Active Player: { Name = "Corbin"
-                  Color = Red }
-                Board State:
-                [Green] Token One is at board position: Safety Four
-                [Green] Token Two is at board position: Outer (Red, One)
-                [Green] Token Three is at board position: Start
-                [Red] Token One is at board position: Safety One
-                [Red] Token Two is at board position: Safety Five
-                [Red] Token Three is at board position: Outer (Green, Five)
-                [Blue] Token One is at board position: Outer (Red, Fourteen)
-                [Blue] Token Two is at board position: Safety Four
-                [Blue] Token Three is at board position: Start
-
-                Drawn Card: Seven
-                Available Actions: Action[0]: MovePawn ({ Color = Red
-                            ID = Three }, 7)
-                Action[1]: SplitMove7 (({ Color = Red
-                               ID = Two }, 1), ({ Color = Red
-                                                  ID = Three }, 6))
-                            ]*)
             
             testList "Card 10 movement Tests" [
                 

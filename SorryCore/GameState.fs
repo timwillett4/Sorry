@@ -21,9 +21,6 @@ let newGame = SettingUp({Players=[]})
 /// getChosenColors returns a list of the colors that have already been chosen
 let private getChosenColors (game:SetupState) = game.Players |> List.map (fun player -> player.Color)
 
-/// Converts board position to 1 first square out of start to 65(home) representing
-/// local coordinates for a particular color
-
 let wrap max n = (n + max) % max
 let nColors = 4
 let incrementColor increment color =
@@ -43,7 +40,10 @@ let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
            // calculate how many colors away from the local color we are
            // Example: Colors are in order Green->Red->Blue->Yellow
            let colorDist = (color |> int) - (localColor |> int) |> wrap nColors
-           (colorDist * nSpacePerColor) + (coord |> int)
+           match ((colorDist * nSpacePerColor) + (coord |> int)) with
+           | 60 -> 0 // square 60 is safety 1, so we convert square 1 behind start to 0
+           | local -> local
+           
        | Start ->
            failwith "Start square is special square and can not be used with to local"
 
