@@ -515,6 +515,28 @@ let getAvailableActionTests =
                     Expect.equal greenPawn1Pos (Ok(Outer(Color.Yellow, OuterCoordinate.Fifteen)))
                         "Expected pawn 1 to be moved backwards 1 spaces to yellow 15"
                 }
+                
+                test $"Expect to be able to move piece forward after moving backwards 1 from start" {
+                    let boardState = {
+                           Deck = newDeck
+                           Players = [levi;dad]
+                           TokenPositions = [
+                               GreenPawn1, BoardPosition.Safety(SafetySquare.Three)
+                               GreenPawn2, BoardPosition.Outer(Color.Green, OuterCoordinate.One)
+                               GreenPawn3, BoardPosition.Start
+                               
+                               BluePawn1, BoardPosition.Outer(Color.Red, OuterCoordinate.Fifteen)
+                               BluePawn2, BoardPosition.Outer(Color.Red, OuterCoordinate.Ten)
+                               BluePawn3, BoardPosition.Start
+                           ] |> Map.ofList
+                           ActivePlayer = dad
+                    }
+                    
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Eight }
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    
+                    Expect.equal availableActions [MovePawn(BluePawn1, 8);MovePawn(BluePawn2, 8)] "Expected to be able to move blue pawns 1 and 2"
+                }
             ]
             
             testList "Card 11 movement tests" [
