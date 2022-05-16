@@ -186,7 +186,7 @@ let getAvailableActions game =
             // Since known max pawns is 3 simpler to hard code all possibilities then come up with generic implementation
             let pieceSplits =
                 match pawnsEligibleToMove with
-                | [pawn1; pawn2; pawn3] -> [(pawn1, pawn2);(pawn2, pawn3)]
+                | [pawn1; pawn2; pawn3] -> [(pawn1, pawn2);(pawn1, pawn3);(pawn2, pawn3)]
                 | [pawn1; pawn2] -> [(pawn1, pawn2)]
                 | _ -> []
                 
