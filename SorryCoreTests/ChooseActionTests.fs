@@ -14,11 +14,16 @@ let getAvailableActionTests =
     testList "Choose action tests" [
         let levi = {Name="Levi"; Color=Color.Green}
         let dad = {Name="Dad"; Color=Color.Blue}
+        let corbin = {Name="Corbin"; Color=Color.Red}
         
         let GreenPawn1 = {Color=Color.Green;ID=PawnID.One}
         let GreenPawn2 = {Color=Color.Green;ID=PawnID.Two}
         let GreenPawn3 = {Color=Color.Green;ID=PawnID.Three}
 
+        let RedPawn1 = {Color=Color.Red;ID=PawnID.One}
+        let RedPawn2 = {Color=Color.Red;ID=PawnID.Two}
+        let RedPawn3 = {Color=Color.Red;ID=PawnID.Three}
+        
         let BluePawn1 = {Color=Color.Blue;ID=PawnID.One}
         let BluePawn2 = {Color=Color.Blue;ID=PawnID.Two}
         let BluePawn3 = {Color=Color.Blue;ID=PawnID.Three}
@@ -450,7 +455,59 @@ let getAvailableActionTests =
                     let availableActions = gameState |> GameState.getAvailableActions
                     Expect.equal availableActions [Action.PassTurn] "Expected no available turns"
                 }
+                
+                test $"Expect to be able to split with any 2 valid move combinations" {
+                    
+                    let boardState = {
+                           Deck = newDeck
+                           Players = [levi;corbin]
+                           TokenPositions = [
+                               GreenPawn1, BoardPosition.Start
+                               GreenPawn2, BoardPosition.Start
+                               GreenPawn3, BoardPosition.Start
+                               
+                               RedPawn1, BoardPosition.Safety SafetySquare.One
+                               RedPawn2, BoardPosition.Safety SafetySquare.Five
+                               RedPawn3, BoardPosition.Outer(Color.Green, OuterCoordinate.Five)
+                           ] |> Map.ofList
+                           ActivePlayer = corbin
+                    }
+                
+                    let gameState = ChoosingAction{BoardState = boardState; DrawnCard = Card.Seven }
+                    let availableActions = gameState |> GameState.getAvailableActions
+                    
+                    let expectedActions = [
+                            MovePawn(RedPawn3, 7)
+                            SplitMove7((RedPawn1, 1), (RedPawn3, 6))
+                            SplitMove7((RedPawn1, 2), (RedPawn3, 5))
+                            SplitMove7((RedPawn1, 3), (RedPawn3, 4))
+                            SplitMove7((RedPawn1, 5), (RedPawn3, 2))
+                            SplitMove7((RedPawn2, 1), (RedPawn3, 6))
+                        ]
+                    
+                    Expect.equal availableActions expectedActions "Expected to be able to ove pawn3 or split with pawn1 and pawn3 or pawn2 and pawn3"
+               }
             ]
+                (*Active Player: { Name = "Corbin"
+                  Color = Red }
+                Board State:
+                [Green] Token One is at board position: Safety Four
+                [Green] Token Two is at board position: Outer (Red, One)
+                [Green] Token Three is at board position: Start
+                [Red] Token One is at board position: Safety One
+                [Red] Token Two is at board position: Safety Five
+                [Red] Token Three is at board position: Outer (Green, Five)
+                [Blue] Token One is at board position: Outer (Red, Fourteen)
+                [Blue] Token Two is at board position: Safety Four
+                [Blue] Token Three is at board position: Start
+
+                Drawn Card: Seven
+                Available Actions: Action[0]: MovePawn ({ Color = Red
+                            ID = Three }, 7)
+                Action[1]: SplitMove7 (({ Color = Red
+                               ID = Two }, 1), ({ Color = Red
+                                                  ID = Three }, 6))
+                            ]*)
             
             testList "Card 10 movement Tests" [
                 
