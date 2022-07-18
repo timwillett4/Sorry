@@ -49,7 +49,7 @@ let startGameTests =
             Expect.equal numCardsInDeck (Ok(45)) "Expected game to contain 45 cards"
         }
         
-        test "There should be 3 tokens of each color" {
+        test "There should be 4 tokens of each color" {
             let are3ofEachColor = result {
                 let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
                 let tokens = gameState |> GameState.getTokenPositions
@@ -59,7 +59,7 @@ let startGameTests =
                     |> Map.filter (fun (pawn:Pawn) _ -> pawn.Color = color)
                     |> Map.count 
                 
-                return (tokens |> countColor Color.Green) = 3 && (tokens |> countColor Color.Yellow) = 3
+                return (tokens |> countColor Color.Green) = 4 && (tokens |> countColor Color.Yellow) = 4
             }
             
             Expect.equal are3ofEachColor (Ok(true)) "Expected 3 of each color"
