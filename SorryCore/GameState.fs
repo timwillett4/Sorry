@@ -3,7 +3,6 @@
 open FSharp.Core.Extensions
 open FSharp.Core.Extensions.Result
 open FSharp.Core.Extensions.Validation
-open Microsoft.FSharp.Data.UnitSystems.SI.UnitNames
 open Sorry.Core
 
 /// The Sorry Game State consists
@@ -276,7 +275,8 @@ let tryStartGame random game =
                 |> List.map (fun player ->
                     [{Color=player.Color;ID=PawnID.One}, BoardPosition.Start
                      {Color=player.Color;ID=PawnID.Two}, BoardPosition.Start
-                     {Color=player.Color;ID=PawnID.Three}, BoardPosition.Start])
+                     {Color=player.Color;ID=PawnID.Three}, BoardPosition.Start
+                     {Color=player.Color;ID=PawnID.Four}, BoardPosition.Start])
                 |> List.reduce (fun colors1 colors2 -> colors1 @ colors2)
                 |> Map.ofList
                 

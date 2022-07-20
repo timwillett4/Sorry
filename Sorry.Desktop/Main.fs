@@ -55,6 +55,7 @@ let actionText action =
            | PawnID.One -> "One"
            | PawnID.Two -> "Two"
            | PawnID.Three -> "Three"
+           | PawnID.Four -> "Four"
         (pawn.Color |> colorText) + "-" + (pawn.ID |> IDText)
     match action with
     | DomainTypes.Action.Sorry(pawnOnStart, pawnToBump) ->
@@ -181,67 +182,73 @@ let view (state: State) (dispatch: Msg -> unit) =
         let pawnTop = createEllipse 0.4 0.4 (x + 0.3) (y) color
         let pawnNeck = createEllipse 0.3 0.5 (x + 0.35) (y + 0.3) color
         let pawnBase = createEllipse 0.8 0.4 (x + 0.1) (y + 0.6) color
-        let pawnID = match pawnID with
-                     | PawnID.One -> [
-                            Line.create [
-                                let left,top = toScreenCoords borderWidth squareWidth x y
-                                Line.startPoint (left + (squareWidth/2.0), top + 20.0)
-                                Line.endPoint (left + (squareWidth/2.0), top + 30.0)
-                                Line.strokeLineCap PenLineCap.Round
-                                Line.strokeJoinCap PenLineJoin.Bevel
-                                Line.stroke "Black"
-                                Line.strokeThickness 2.0
-                            ] :> IView
-                        ]
-                     | PawnID.Two -> [
-                            Line.create [
-                                let left,top = toScreenCoords borderWidth squareWidth x y
-                                Line.startPoint (left + (squareWidth/2.0) - 5.0, top + 20.0)
-                                Line.endPoint (left + (squareWidth/2.0) - 5.0, top + 30.0)
-                                Line.strokeLineCap PenLineCap.Round
-                                Line.strokeJoinCap PenLineJoin.Bevel
-                                Line.stroke "Black"
-                                Line.strokeThickness 2.0
-                            ] :> IView
-                            Line.create [
-                                let left,top = toScreenCoords borderWidth squareWidth x y
-                                Line.startPoint (left + (squareWidth/2.0 + 5.0), top + 20.0)
-                                Line.endPoint (left + (squareWidth/2.0 + 5.0), top + 30.0)
-                                Line.strokeLineCap PenLineCap.Round
-                                Line.strokeJoinCap PenLineJoin.Bevel
-                                Line.stroke "Black"
-                                Line.strokeThickness 2.0
-                            ] :> IView
-                        ]
-                        | PawnID.Three -> [
-                                Line.create [
-                                    let left,top = toScreenCoords borderWidth squareWidth x y
-                                    Line.startPoint (left + (squareWidth/2.0) - 5.0, top + 20.0)
-                                    Line.endPoint (left + (squareWidth/2.0) - 5.0, top + 30.0)
-                                    Line.strokeLineCap PenLineCap.Round
-                                    Line.strokeJoinCap PenLineJoin.Bevel
-                                    Line.stroke "Black"
-                                    Line.strokeThickness 2.0
-                                ] :> IView
-                                Line.create [
-                                    let left,top = toScreenCoords borderWidth squareWidth x y
-                                    Line.startPoint (left + (squareWidth/2.0), top + 20.0)
-                                    Line.endPoint (left + (squareWidth/2.0), top + 30.0)
-                                    Line.strokeLineCap PenLineCap.Round
-                                    Line.strokeJoinCap PenLineJoin.Bevel
-                                    Line.stroke "Black"
-                                    Line.strokeThickness 2.0
-                                ] :> IView
-                                Line.create [
-                                    let left,top = toScreenCoords borderWidth squareWidth x y
-                                    Line.startPoint (left + (squareWidth/2.0 + 5.0), top + 20.0)
-                                    Line.endPoint (left + (squareWidth/2.0 + 5.0), top + 30.0)
-                                    Line.strokeLineCap PenLineCap.Round
-                                    Line.strokeJoinCap PenLineJoin.Bevel
-                                    Line.stroke "Black"
-                                    Line.strokeThickness 2.0
-                                ] :> IView
-                            ]
+        let pawnID =
+             let left,top = toScreenCoords borderWidth squareWidth x y
+             let drawTallyMark (startPoint:double*double) (endPoint:double*double) =
+                    Line.create [
+                        Line.startPoint (startPoint |> Avalonia.Point)
+                        Line.endPoint (endPoint |> Avalonia.Point)
+                        Line.strokeLineCap PenLineCap.Round
+                        Line.strokeJoinCap PenLineJoin.Bevel
+                        Line.stroke "Black"
+                        Line.strokeThickness 2.0
+                    ] :> IView
+             
+             match pawnID with
+                | PawnID.One -> 
+                    let startPoint = (left + (squareWidth/2.0), top + 20.0)
+                    let endPoint = (left + (squareWidth/2.0), top + 30.0)
+                    let tallyMark = drawTallyMark startPoint endPoint
+                    
+                    [tallyMark]
+                | PawnID.Two ->
+                    let tallyMark1 =
+                        let startPoint = (left + (squareWidth/2.0) - 5.0, top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0) - 5.0, top + 30.0)
+                        drawTallyMark startPoint endPoint
+                    let tallyMark2 =
+                        let startPoint = (left + (squareWidth/2.0) + 5.0, top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0) + 5.0, top + 30.0)
+                        drawTallyMark startPoint endPoint
+                    
+                    [tallyMark1; tallyMark2]
+                    
+                | PawnID.Three ->
+                    let tallyMark1 =
+                        let startPoint = (left + (squareWidth/2.0) - 5.0, top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0) - 5.0, top + 30.0)
+                        drawTallyMark startPoint endPoint
+                    let tallyMark2 =
+                        let startPoint = (left + (squareWidth/2.0), top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0), top + 30.0)
+                        drawTallyMark startPoint endPoint
+                    let tallyMark3 =
+                        let startPoint = (left + (squareWidth/2.0) + 5.0, top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0) + 5.0, top + 30.0)
+                        drawTallyMark startPoint endPoint
+                        
+                    [tallyMark1; tallyMark2; tallyMark3]
+                    
+                | PawnID.Four ->
+                    let tallyMark1 =
+                        let startPoint = (left + (squareWidth/2.0) - 5.0, top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0) - 5.0, top + 30.0)
+                        drawTallyMark startPoint endPoint
+                    let tallyMark2 =
+                        let startPoint = (left + (squareWidth/2.0) - 1.7, top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0) - 1.7, top + 30.0)
+                        drawTallyMark startPoint endPoint
+                    let tallyMark3 =
+                        let startPoint = (left + (squareWidth/2.0) + 1.7, top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0) + 1.7, top + 30.0)
+                        drawTallyMark startPoint endPoint
+                    let tallyMark4 =
+                        let startPoint = (left + (squareWidth/2.0) + 5.0, top + 20.0)
+                        let endPoint = (left + (squareWidth/2.0) + 5.0, top + 30.0)
+                        drawTallyMark startPoint endPoint
+                        
+                    [tallyMark1; tallyMark2; tallyMark3; tallyMark4]
+                         
         [pawnBase; pawnNeck; pawnTop]@pawnID
         
     let outerSquares =
