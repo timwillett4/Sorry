@@ -45,7 +45,7 @@ let getAvailableActionTests =
 
         testList "Initial state tests" [
             
-            let gameState = Drawing(initialBoardState)
+            let gameState = DrawingCard(initialBoardState)
             
             test "Initial actions for a newly created game should be [DrawCard]" {
                 
@@ -774,7 +774,7 @@ let getAvailableActionTests =
                 test $"Expect green pawn 1 to move to square where blue pawn 1 was" {
                     
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Blue, OuterCoordinate.One))
                             "Expected green pawn1 to move to square where blue pawn 2 was"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -783,7 +783,7 @@ let getAvailableActionTests =
                 test $"Expect blue pawn 1 to move back to start" {
                     
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[BluePawn1] Start
                             "Expected blue pawn 1 to go back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -792,7 +792,7 @@ let getAvailableActionTests =
                 test $"Expect turn to move to next player" {
                     
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.ActivePlayer dad "Expect turn to move to next player"
                     | _ -> failtest "Expected game to transition to draw state" 
                 }
@@ -845,7 +845,7 @@ let getAvailableActionTests =
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, 1))
                 
                 match newGameState with
-                | Ok(Drawing(gameState)) -> 
+                | Ok(DrawingCard(gameState)) -> 
                     Expect.equal gameState.TokenPositions.[BluePawn1] Start
                         "Expected blue pawn 1 to go back to start"
                 | _ -> failtest "Expected game to transition to draw state" 
@@ -899,7 +899,7 @@ let getAvailableActionTests =
                 
                 test $"When you land on a slide triangle on square 6, you piece should move an additional 4 spacs to the end of the slide region" {
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Red, OuterCoordinate.Ten))
                             "Expected green pawn 1 to move to the end of the slide region at outer sqaure red 10"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -907,7 +907,7 @@ let getAvailableActionTests =
                 
                 test $"When another piece is in the slide 4 region it should get bumped back to start" {
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[BluePawn1] Start
                             "Expected blue pawn 1 to get bumped back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -915,7 +915,7 @@ let getAvailableActionTests =
                 
                 test $"When your own piece is in the slide 4 region it should also get bumped back to start" {
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[GreenPawn3] Start
                             "Expected blue pawn 1 to get bumped back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -926,7 +926,7 @@ let getAvailableActionTests =
                 test $"When you land on a slide triangle on square 13, you piece should move an additional 3 spaces to the end of the slide region" {
                     
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Blue, OuterCoordinate.One))
                             "Expected green pawn 2 to move to the end of the slide region at outer sqaure blue 1"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -934,7 +934,7 @@ let getAvailableActionTests =
                 
                 test $"When another piece is in the slide 3 region it should get bumped back to start" {
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[BluePawn2] Start
                             "Expected blue pawn 1 to get bumped back to start"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -962,7 +962,7 @@ let getAvailableActionTests =
                 test $"You should not slide when you land on your own slide 4 square" {
                     
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[GreenPawn1] (Outer(Color.Green, OuterCoordinate.Six))
                             "Expected pawn to not slide and just move forward 1 space"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -971,7 +971,7 @@ let getAvailableActionTests =
                 test $"Opponent pawn on slide 4 region should not be bumped when you land on your own slide 4 square" {
                 
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[BluePawn1] (Outer(Color.Green, OuterCoordinate.Seven))
                             "Expected blue pawn 1 to remain on green 7"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -982,7 +982,7 @@ let getAvailableActionTests =
                 // your own slide 3 square is on the previous colors outer 13 square
                 test $"You should not slide when you land on your own slide 3 square" {
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[GreenPawn2] (Outer(Color.Yellow, OuterCoordinate.Thirteen))
                             "Expected pawn to not slide and just move forward one square to yellow 13"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -991,7 +991,7 @@ let getAvailableActionTests =
                 test $"Opponent pawn on slide 3 region should not be bumped when you land on your own slide 4 square" {
                 
                     match newGameState with
-                    | Ok(Drawing(gameState)) -> 
+                    | Ok(DrawingCard(gameState)) -> 
                         Expect.equal gameState.TokenPositions.[BluePawn2] (Outer(Color.Yellow, OuterCoordinate.Fourteen))
                             "Expected blue pawn 2 to remain on yellow 14"
                     | _ -> failtest "Expected game to transition to draw state" 
@@ -1171,7 +1171,7 @@ let getAvailableActionTests =
                     ActivePlayer = levi
                 }
                     
-                let gameState = Drawing(boardState)
+                let gameState = DrawingCard(boardState)
                     
                 let numCardsLeft = result {
                    let! gameState = gameState |> tryChooseAction Action.DrawCard

@@ -83,21 +83,21 @@ let getAvailableColors game =
 // @TODO convert to Option instead of result
 let getTokenPositions game = 
     match game with
-    | Drawing(gameState) -> gameState.TokenPositions
+    | DrawingCard(gameState) -> gameState.TokenPositions
     | ChoosingAction(gameState) -> gameState.BoardState.TokenPositions
     | SettingUp _ -> Map.empty
     | GameOver _ -> Map.empty // @TODO - return final state instead of empty
     
 let getPlayers game = 
     match game with
-    | Drawing(gameState) -> Ok(gameState.Players)
+    | DrawingCard(gameState) -> Ok(gameState.Players)
     | ChoosingAction(gameState) -> Ok(gameState.BoardState.Players)
     | SettingUp _ -> Error(game, "Game is still in setup state")
     | GameOver _ -> Error(game, "Not implemented")
     
 let getActivePlayer game = 
     match game with
-    | Drawing(gameState) -> Some(gameState.ActivePlayer)
+    | DrawingCard(gameState) -> Some(gameState.ActivePlayer)
     | ChoosingAction(gameState) -> Some(gameState.BoardState.ActivePlayer)
     | SettingUp _ -> None
     | GameOver(gameState) -> Some(gameState.Winner)
@@ -106,7 +106,7 @@ let getAvailableActions game =
     match game with
     | SettingUp _ -> [] // @TODO 
     | GameOver _ -> []
-    | Drawing _ -> [Action.DrawCard]
+    | DrawingCard _ -> [Action.DrawCard]
     | ChoosingAction(game) ->
         let activeColor = game.BoardState.ActivePlayer.Color
         let boardPositions = game.BoardState.TokenPositions
@@ -231,7 +231,7 @@ let getDrawnCard game =
 let getNumCardLeft game = 
     match game with
     | ChoosingAction actionState -> Ok(actionState.BoardState.Deck.Length)
-    | Drawing boardState -> Ok(boardState.Deck.Length)
+    | DrawingCard boardState -> Ok(boardState.Deck.Length)
     | _ -> Error(game, "Invalid state")
     
 // Commands
@@ -282,14 +282,14 @@ let tryStartGame random game =
                 
             let tokenPositions = initializeTokenPositions setupState.Players
             
-            Ok(Drawing({Deck=newDeck;Players=setupState.Players;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[activePlayer]}))
+            Ok(DrawingCard({Deck=newDeck;Players=setupState.Players;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[activePlayer]}))
             
         | false, error -> Error(game, error)
     | _ -> Error(game, "Can only start a game that is still in setup state")
                  
 let tryDrawCard random game =
     match game with
-    | Drawing(gameState) ->
+    | DrawingCard(gameState) ->
         // for simplicity sake, rather than shuffle deck, draw random card each time
         let drawIndex = random() % gameState.Deck.Length
         let topCut, bottomCut = gameState.Deck |> List.splitAt drawIndex
@@ -397,7 +397,7 @@ let tryChooseAction random logger action game =
             // now assume all actions are valid below and just update without worry
             // of it putting game in invalid state
             return! match game with
-                    | Drawing(_) ->
+                    | DrawingCard(_) ->
                         match action with
                         | DrawCard -> game |> tryDrawCard random
                         | _ -> Error(game, "Can only draw card when game is in draw state")
@@ -416,20 +416,20 @@ let tryChooseAction random logger action game =
                             | Some(winner) -> Ok(GameOver{Winner=winner})
                             | None ->
                                 match gameState.DrawnCard with
-                                | Card.Two -> Ok(Drawing(newBoardState))
-                                | _ -> Ok(Drawing(newBoardState |> updateActivePlayer))
+                                | Card.Two -> Ok(DrawingCard(newBoardState))
+                                | _ -> Ok(DrawingCard(newBoardState |> updateActivePlayer))
                         | SplitMove7((pawn1, move1),(pawn2, move2)) ->
                             let newBoardState = gameState.BoardState
                                                 |> movePawn pawn1 move1
                                                 |> movePawn pawn2 move2
-                            Ok(Drawing(newBoardState |> updateActivePlayer))
+                            Ok(DrawingCard(newBoardState |> updateActivePlayer))
                         | SwitchPawns(pawn1,pawn2) ->
                             let newBoardState = gameState.BoardState |> switchPawns pawn1 pawn2
-                            Ok(Drawing(newBoardState |> updateActivePlayer))
+                            Ok(DrawingCard(newBoardState |> updateActivePlayer))
                         | Sorry(pawn1, pawn2) ->
                             let newBoardState = gameState.BoardState |> sorry pawn1 pawn2
-                            Ok(Drawing(newBoardState |> updateActivePlayer))
-                        | PassTurn -> Ok(Drawing(gameState.BoardState |> updateActivePlayer))
+                            Ok(DrawingCard(newBoardState |> updateActivePlayer))
+                        | PassTurn -> Ok(DrawingCard(gameState.BoardState |> updateActivePlayer))
                         | _ -> Error(game, "Unimplemented")
                     | _ -> Error(game, "Unimplemented")
         else            

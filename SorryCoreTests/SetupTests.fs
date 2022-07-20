@@ -10,11 +10,28 @@ let startGameTests =
     let levi = {Color=Color.Green; Name = "Levi"}
     let corbin = {Color=Color.Yellow; Name = "Corbin"}
     let micah = {Color=Color.Blue; Name = "Micah"}
+    let barrett = {Color=Color.Red; Name = "Barrett"}
     
     let random1 = fun () -> 1
     let tryStartGame = GameState.tryStartGame random1
     
-    testList "Start Game Tests" [
+    testList "Setup Tests" [
+        
+        testList "To start a game there must be between 2 to 4 players" [
+            
+            test "Starting a game with only 1 player should return an error" {
+                
+                let gameState = SettingUp({Players = [levi]}) |> tryStartGame
+                    
+                Expect.isError gameState "Expect error to be returned when a game is started with only 1 player"
+            }
+            
+            test "Starting a game with 2 players should transition the game to draw state" {
+                let gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
+                
+                Expect.isOk gameState "Expected start game to succeed with 4 players"
+            }
+        ]
         
         test "Starting a game when a game is in the game over state should return an error" {
             let gameState = GameOver({Winner=levi}) |> tryStartGame
@@ -22,27 +39,12 @@ let startGameTests =
             Expect.isError gameState "Expect error to be returned starting a game that is not in setting up state"
         }
         
-        test "Starting a game with only 1 player should return an error" {
-            
-            let gameState = SettingUp({Players = [levi]}) |> tryStartGame
-                
-            Expect.isError gameState "Expect error to be returned when a game is started with only 1 player"
-        }
-        
-        test "Starting a game with 2 or more players should transition the game to draw state" {
-            let gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
-            
-            match gameState with
-            | Ok(Drawing _) -> ()
-            | _ -> failtest "Expected game to transition to drawing state"
-        }
-        
         test "A new game should have 45 cards in the deck" {
             let numCardsInDeck = result {
                 let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
                 
                 return! match gameState with
-                        | Drawing gameState -> Ok gameState.Deck.Length
+                        | DrawingCard gameState -> Ok gameState.Deck.Length
                         | _ -> Error (gameState, "Expected game to transition to draw state")
             }
             
@@ -50,7 +52,7 @@ let startGameTests =
         }
         
         test "There should be 4 tokens of each color" {
-            let are3ofEachColor = result {
+            let are4ofEachColor = result {
                 let! gameState = SettingUp({Players = [levi;corbin]}) |> tryStartGame
                 let tokens = gameState |> GameState.getTokenPositions
                 
@@ -62,7 +64,7 @@ let startGameTests =
                 return (tokens |> countColor Color.Green) = 4 && (tokens |> countColor Color.Yellow) = 4
             }
             
-            Expect.equal are3ofEachColor (Ok(true)) "Expected 3 of each color"
+            Expect.equal are4ofEachColor (Ok(true)) "Expected 4 of each color"
         }
         
         test "All pieces should start on their start square" {

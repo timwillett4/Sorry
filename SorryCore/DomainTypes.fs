@@ -23,11 +23,11 @@ type Card =
 
 type Deck = Card list
 
+// @TODO - this is wrong should be 4 pawns
 type PawnID = 
     | One
     | Two
     | Three
-
 
 type Pawn = {
     Color : Color
@@ -36,10 +36,10 @@ type Pawn = {
 
 type Action =
     | DrawCard
-    | MovePawn of pawn:Pawn*spaces:int
-    | SplitMove7 of move1:(Pawn*int)*move2:(Pawn*int)
-    | SwitchPawns of pawn1:Pawn*pawn2:Pawn
-    | Sorry of pawnOnStart:Pawn*pawnToBump:Pawn
+    | MovePawn of pawn:Pawn * spaces:int
+    | SplitMove7 of move1:(Pawn*int) * move2:(Pawn*int)
+    | SwitchPawns of pawn1:Pawn * pawn2:Pawn
+    | Sorry of pawnOnStart:Pawn * pawnToBump:Pawn
     | PassTurn 
 
 let newDeck = [
@@ -106,23 +106,24 @@ type Player = {
     Color : Color
 }
     
-/// BoardPosition Represents all of the possible positions on a sorry board.
-/// There are 60 squares on the outside of the board, a start square for each color
-/// 5 safety squares and home square
+/// BoardPosition Represents all of the possible positions on a Sorry board.
+/// 
+/// There are 60 squares on the outside of the board (16 on each side with 4 corners being on multiple sides),
+/// a start square, 5 safety squares and home square for each of the 4 colors
 /// 
 /// The numbering system for outer squares is as follows:
-///     The first square that a color moves to outside of it's start is square Color * 0.
-///     The next square it moves to is 1, etc.
-///     When you reach the next players opening square it resets to NextColor * 0
+///     The first square that a color moves to outside of it's start is square Color * 1.
+///     The next square it moves to is Color * 2, etc.
+///     When you reach the next players opening square it resets to NextColor * 1
 ///
 /// <example>
-///             R14/B0
+///             R15/B1
 ///              | |
 ///        _ _ _ _ _ _ _ _ _ _ _ _ _ 
 ///        _   _   _               _ 
 ///        _   _       _ _ _ _ _ _ _ 
-///        _   _                   _ <- B14
-///        _   _                 _ _ <- Y0
+///        _   _                   _ <- B15
+///        _   _                 _ _ <- Y1
 ///        _   _                   _ 
 ///        _   _                   _
 ///        _                       _
@@ -130,15 +131,14 @@ type Player = {
 ///        _                       _
 ///        _                   _   _
 ///        _                   _   _
-/// R0 ->  _ _                 _   _
-/// G14 -> _                   _   _
+/// R1 ->  _ _                 _   _
+/// G15 -> _                   _   _
 ///        _ _ _ _ _ _ _       _   _
 ///        _               _   _   _
 ///        _ _ _ _ _ _ _ _ _ _ _ _ _
 ///                        |
-///                      G0/Y14
+///                      G1/Y15
 /// </example>
-
 type OuterCoordinate =
     | One = 1
     | Two = 2
@@ -169,7 +169,7 @@ type BoardPosition =
     | Start 
     | Home 
 
-/// Board state is a map storing where each pawn is on board 
+/// Board state is a map that stores where each pawn is on the board 
 type TokenPositions = Map<Pawn, BoardPosition>
 
 /// The setup state indicates players are still being added and the game has not yet started
@@ -201,6 +201,6 @@ type GameOverState = {
 /// GameState is a discriminate union storing the current state of the game
 type GameState = 
    | SettingUp of SetupState 
-   | Drawing of BoardState
+   | DrawingCard of BoardState
    | ChoosingAction of ChooseActionState
    | GameOver of GameOverState

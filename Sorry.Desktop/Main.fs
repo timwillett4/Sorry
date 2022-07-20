@@ -28,7 +28,7 @@ let initialState() =
         
         let game = GameState.newGame
         let! game = game |> GameState.tryAddPlayer "Levi" Color.Green
-       // let! game = game |> GameState.tryAddPlayer "Corbin" Color.Red
+        //let! game = game |> GameState.tryAddPlayer "Corbin" Color.Red
         let! game = game |> GameState.tryAddPlayer "Tim" Color.Blue
         
         return! game |> GameState.tryStartGame getRandom
