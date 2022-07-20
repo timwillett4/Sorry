@@ -31,39 +31,47 @@ let toScreenCoords boardPos (pawn:Pawn) =
         | PawnID.One -> (10.5,13.0)
         | PawnID.Two -> (11.5,13.0)
         | PawnID.Three -> (10.5,14.0)
+        | PawnID.Four -> (11.5,14.0)
     | BoardPosition.Home, Color.Green ->
         match pawn.ID with
         | PawnID.One -> (12.5,8)
         | PawnID.Two -> (13.5,8)
-        | PawnID.Three -> (13.5,9)
+        | PawnID.Three -> (12.5,9)
+        | PawnID.Four -> (13.5,9)
     | BoardPosition.Start, Color.Red ->
         match pawn.ID with
         | PawnID.One -> (1,10.5)
         | PawnID.Two -> (2,10.5)
         | PawnID.Three -> (1,11.5)
+        | PawnID.Four -> (2,11.5)
     | BoardPosition.Home, Color.Red ->
         match pawn.ID with
         | PawnID.One -> (6,12.5)
         | PawnID.Two -> (7,12.5)
         | PawnID.Three -> (6,13.5)
+        | PawnID.Four -> (7,13.5)
     | BoardPosition.Start, Color.Blue ->
         match pawn.ID with
         | PawnID.One -> (3.5, 1.0)
         | PawnID.Two -> (4.5, 1.0)
         | PawnID.Three -> (3.5, 2.0)
+        | PawnID.Four -> (4.5,2.0)
     | BoardPosition.Home, Color.Blue ->
         match pawn.ID with
         | PawnID.One -> (1.5, 6.0)
         | PawnID.Two -> (2.5, 6.0)
         | PawnID.Three -> (1.5, 7.0)
+        | PawnID.Four -> (2.5, 7.0)
     | BoardPosition.Start, Color.Yellow ->
         match pawn.ID with
         | PawnID.One -> (13, 3.5)
         | PawnID.Two -> (14, 3.5)
         | PawnID.Three -> (13, 4.5)
+        | PawnID.Four -> (14, 4.5)
     | BoardPosition.Home, Color.Yellow ->
         match pawn.ID with
         | PawnID.One -> (8, 1.5)
         | PawnID.Two -> (9, 1.5)
         | PawnID.Three -> (8, 2.5)
-    | _ -> failwith "Invalid board pos"
+        | PawnID.Four -> (9, 2.5)
+    | _ -> failwith "Invalid board position"

@@ -28,7 +28,8 @@ type PawnID =
     | One
     | Two
     | Three
-
+    | Four
+    
 type Pawn = {
     Color : Color
     ID : PawnID
