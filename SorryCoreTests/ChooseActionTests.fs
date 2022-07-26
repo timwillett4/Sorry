@@ -111,7 +111,7 @@ let getAvailableActionTests =
                 return newGameState |> GameState.getActivePlayer
             }
             
-            Expect.equal activePlayer (Ok(Some(dad))) "Expected turn to move to next player"
+            Expect.equal activePlayer (Ok(dad)) "Expected turn to move to next player"
         }
         
         test "When two is drawn moving from start should not change active player (player gets to draw again)" {
@@ -122,7 +122,7 @@ let getAvailableActionTests =
                 return newGameState |> GameState.getActivePlayer
             }
             
-            Expect.equal activePlayer (Ok(Some(levi))) "Expected active player to get another turn"
+            Expect.equal activePlayer (Ok(levi)) "Expected active player to get another turn"
         }
         
         let canNotMoveFromStart card =
@@ -140,7 +140,7 @@ let getAvailableActionTests =
                         let! newGameState = initialGameState |> tryChooseAction Action.PassTurn
                         return newGameState |> GameState.getActivePlayer
                     }
-                    Expect.equal activePlayer (Ok(Some(dad))) "Expected turn to move to next player"
+                    Expect.equal activePlayer (Ok(dad)) "Expected turn to move to next player"
                         
                  $"When all pieces are in home squares and a %A{card} is drawn, choosing pass turn action should not change the token positions",
                  fun initialGameState () ->
@@ -216,7 +216,7 @@ let getAvailableActionTests =
                             let! newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, expectedMove))
                             return newGameState |> GameState.getActivePlayer
                         }
-                        Expect.equal activePlayer (Ok(Some(dad))) "Expected active player to switch to dad"
+                        Expect.equal activePlayer (Ok(dad)) "Expected active player to switch to dad"
                 ])        
               
             basicMovementCardsTests Card.One 1 (Outer(Color.Green, OuterCoordinate.Three)) |> testList "One Basic Movement Tests"
@@ -270,7 +270,7 @@ let getAvailableActionTests =
                         let! newGameState = newGameState
                         return newGameState |> GameState.getActivePlayer
                     }
-                    Expect.equal activePlayer (Ok(Some(levi))) "Expected active player to draw again"
+                    Expect.equal activePlayer (Ok(levi)) "Expected active player to draw again"
                 }
             ]
             
@@ -320,7 +320,7 @@ let getAvailableActionTests =
                         let! newGameState = newGameState
                         return newGameState |> GameState.getActivePlayer
                     }
-                    Expect.equal activePlayer (Ok(Some(dad))) "Expect turn to move to next player"
+                    Expect.equal activePlayer (Ok(dad)) "Expect turn to move to next player"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.MovePawn(GreenPawn1, -4))
@@ -387,7 +387,7 @@ let getAvailableActionTests =
                         let! newGameState = newGameState
                         return newGameState |> GameState.getActivePlayer
                     } 
-                    Expect.equal activePlayer (Ok(Some(dad))) "Expect turn to move to next player"
+                    Expect.equal activePlayer (Ok(dad)) "Expect turn to move to next player"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.SplitMove7((GreenPawn1, 1),(GreenPawn2,6)))
@@ -539,7 +539,7 @@ let getAvailableActionTests =
                         let! newGameState = newGameState
                         return newGameState |> GameState.getActivePlayer
                     } 
-                    Expect.equal activePlayer (Ok(Some(dad))) "Expect turn to move to next player"
+                    Expect.equal activePlayer (Ok(dad)) "Expect turn to move to next player"
                 }
                 
                 
@@ -627,7 +627,7 @@ let getAvailableActionTests =
                         let! newGameState = newGameState
                         return newGameState |> GameState.getActivePlayer
                     }
-                    Expect.equal activePlayer (Ok(Some(dad))) "Expect turn to move to next player"
+                    Expect.equal activePlayer (Ok(dad)) "Expect turn to move to next player"
                 }
                 
                 let newGameState = gameState |> tryChooseAction (Action.SwitchPawns(GreenPawn1, BluePawn1))
@@ -1175,7 +1175,7 @@ let getAvailableActionTests =
                     
                 let numCardsLeft = result {
                    let! gameState = gameState |> tryChooseAction Action.DrawCard
-                   return! gameState |> GameState.getNumCardLeft
+                   return gameState |> GameState.getNumCardsLeft
                 }
                     
                 Expect.equal numCardsLeft (Ok(newDeck.Length)) "Expected deck to be shuffled when cards run out"

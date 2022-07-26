@@ -2,24 +2,13 @@
 
 open FSharp.Core.Extensions
 open FSharp.Core.Extensions.Result
-open FSharp.Core.Extensions.Validation
 open Sorry.Core
 
 /// The Sorry Game State consists
 /// @TODO - finish
 
 
-/// <summary>
-/// New came starts in setup state with no players
-/// Players can be added with <see cref="addPlayers">addPlayers</see>
-/// </summary>
-let newGame = SettingUp({Players=[]})
-
 // Queries
-
-/// getChosenColors returns a list of the colors that have already been chosen
-let private getChosenColors (game:SetupState) = game.Players |> List.map (fun player -> player.Color)
-
 let wrap max n = (n + max) % max
 let nColors = 4
 let incrementColor increment color =
@@ -69,41 +58,27 @@ let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
         Some(Outer(localColor, OuterCoordinate.One))
     | position -> ((position |> toLocal) + moveIncrement) |> toBoardPosition
         
-/// getAvailableColors returns the available colors left to choose from
-/// this query is only valid before a game has been started via calling 'startGame'
-let getAvailableColors game =
-    match game with
-    | SettingUp(game) ->
-        let allColors = FSharpType.getAllEnumsValues<Color>()
-        let chosenColors = game |> getChosenColors
-        List.distinct allColors chosenColors
-    | _ -> []
-
 // @TODO convert to Option instead of result
 let getTokenPositions game = 
     match game with
     | DrawingCard(gameState) -> gameState.TokenPositions
     | ChoosingAction(gameState) -> gameState.BoardState.TokenPositions
-    | SettingUp _ -> Map.empty
-    | GameOver _ -> Map.empty // @TODO - return final state instead of empty
+    | GameOver _ -> failwith "Not Implemented"
     
 let getPlayers game = 
     match game with
-    | DrawingCard(gameState) -> Ok(gameState.Players)
-    | ChoosingAction(gameState) -> Ok(gameState.BoardState.Players)
-    | SettingUp _ -> Error(game, "Game is still in setup state")
-    | GameOver _ -> Error(game, "Not implemented")
+    | DrawingCard(gameState) -> gameState.Players
+    | ChoosingAction(gameState) -> gameState.BoardState.Players
+    | GameOver _ -> failwith "Not Implemented"
     
 let getActivePlayer game = 
     match game with
-    | DrawingCard(gameState) -> Some(gameState.ActivePlayer)
-    | ChoosingAction(gameState) -> Some(gameState.BoardState.ActivePlayer)
-    | SettingUp _ -> None
-    | GameOver(gameState) -> Some(gameState.Winner)
+    | DrawingCard(gameState) -> gameState.ActivePlayer
+    | ChoosingAction(gameState) -> gameState.BoardState.ActivePlayer
+    | GameOver(gameState) -> gameState.Winner
     
 let getAvailableActions game =
     match game with
-    | SettingUp _ -> [] // @TODO 
     | GameOver _ -> []
     | DrawingCard _ -> [Action.DrawCard]
     | ChoosingAction(game) ->
@@ -227,66 +202,12 @@ let getDrawnCard game =
     | ChoosingAction(game) -> Some(game.DrawnCard)
     | _ -> None
     
-let getNumCardLeft game = 
+let getNumCardsLeft game = 
     match game with
-    | ChoosingAction actionState -> Ok(actionState.BoardState.Deck.Length)
-    | DrawingCard boardState -> Ok(boardState.Deck.Length)
-    | _ -> Error(game, "Invalid state")
+    | ChoosingAction actionState -> actionState.BoardState.Deck.Length
+    | DrawingCard boardState -> boardState.Deck.Length
+    | GameOver boardState -> 0 // @TODO
     
-// Commands
-let tryAddPlayer name color game =
-    match game with
-    | SettingUp(setupState) ->
-        let addPlayerRules : ValidationRule<SetupState * Player> list =
-            [ fun (setupState, player) ->
-                let chosenColors = setupState |> getChosenColors
-                not <| (chosenColors |> List.contains player.Color), "Can't choose a color that has already been chosen"]
-            
-        let addPlayerValidator = buildValidator addPlayerRules
-        
-        match (setupState, {Name=name;Color=color}) |> addPlayerValidator with
-        | true, _ -> Ok(SettingUp({ Players = setupState.Players @ [{Name=name; Color=color}]}))
-        | false, error -> Error(game, error)
-    | _ -> Error(game, "Can only add players when game is in setup state")
-    
-/// <summary>
-/// <para>
-/// try startGame should be called when you are done adding players and configuring settings
-/// and ready to begin the game.
-/// </para>
-/// <para>
-/// It will return an error if the setup criteria has not been met
-/// </para>
-/// </summary>
-let tryStartGame random game =
-    match game with
-    | SettingUp(setupState) ->
-        let startGameRules : ValidationRule<SetupState> list =
-            [ fun setupState -> setupState.Players.Length >=2, "Must have at least 2 players to start a game"]
-            
-        let startGameValidator = buildValidator startGameRules
-        
-        match setupState |> startGameValidator with
-        | true, _ ->
-            let activePlayer = random() % setupState.Players.Length
-                
-            let initializeTokenPositions (players:Player list) =
-                players
-                |> List.map (fun player ->
-                    [{Color=player.Color;ID=PawnID.One}, BoardPosition.Start
-                     {Color=player.Color;ID=PawnID.Two}, BoardPosition.Start
-                     {Color=player.Color;ID=PawnID.Three}, BoardPosition.Start
-                     {Color=player.Color;ID=PawnID.Four}, BoardPosition.Start])
-                |> List.reduce (fun colors1 colors2 -> colors1 @ colors2)
-                |> Map.ofList
-                
-            let tokenPositions = initializeTokenPositions setupState.Players
-            
-            Ok(DrawingCard({Deck=newDeck;Players=setupState.Players;TokenPositions=tokenPositions;ActivePlayer=setupState.Players.[activePlayer]}))
-            
-        | false, error -> Error(game, error)
-    | _ -> Error(game, "Can only start a game that is still in setup state")
-                 
 let tryDrawCard random game =
     match game with
     | DrawingCard(gameState) ->

@@ -24,19 +24,50 @@ let random = Random()
 let getRandom() =
     random.Next(Int32.MaxValue)
 let initialState() =
+    // @TODO - move this to setup screen
     let game = result {
         
-        let game = GameState.newGame
-        let! game = game |> GameState.tryAddPlayer "Levi" Color.Green
+        let game = GameBuilder.newGame
+        let! game = game |> GameBuilder.tryAddPlayer "Levi" Color.Green
         //let! game = game |> GameState.tryAddPlayer "Corbin" Color.Red
-        let! game = game |> GameState.tryAddPlayer "Tim" Color.Blue
+        let! game = game |> GameBuilder.tryAddPlayer "Tim" Color.Blue
         
-        return! game |> GameState.tryStartGame getRandom
+        return! game |> GameBuilder.tryStartGame getRandom
+    }
+    
+    let levi = {Color=Color.Green; Name = "Levi"}
+    let dad = {Color=Color.Yellow; Name = "Dad"}
+    
+    let GreenPawn1 = {Color=Color.Green;ID=PawnID.One}
+    let GreenPawn2 = {Color=Color.Green;ID=PawnID.Two}
+    let GreenPawn3 = {Color=Color.Green;ID=PawnID.Three}
+    let GreenPawn4 = {Color=Color.Green;ID=PawnID.Four}
+    
+    let BluePawn1 = {Color=Color.Blue;ID=PawnID.One}
+    let BluePawn2 = {Color=Color.Blue;ID=PawnID.Two}
+    let BluePawn3 = {Color=Color.Blue;ID=PawnID.Three}
+    let BluePawn4 = {Color=Color.Blue;ID=PawnID.Four}
+    
+    let boardState = {
+           Deck = newDeck
+           Players = [levi;dad]
+           TokenPositions = [
+               GreenPawn1, BoardPosition.Start
+               GreenPawn2, BoardPosition.Start
+               GreenPawn3, BoardPosition.Start
+               GreenPawn4, BoardPosition.Start
+               
+               BluePawn1, BoardPosition.Start
+               BluePawn2, BoardPosition.Start
+               BluePawn3, BoardPosition.Start
+               BluePawn4, BoardPosition.Start
+           ] |> Map.ofList
+           ActivePlayer = levi
     }
     
     match game with
     | Ok(game) -> {gameState = game; error = None}, Elmish.Cmd.none
-    | Error(game, error) -> {gameState = game; error = Some(error)}, Elmish.Cmd.none
+    | Error(game, error) -> failwith "Unimplemented"//{gameState = game; error = Some(error)}, Elmish.Cmd.none
 
 type Msg =
 | ChooseAction of DomainTypes.Action
@@ -380,17 +411,15 @@ let view (state: State) (dispatch: Msg -> unit) =
                 let activePlayer = state.gameState |> GameState.getActivePlayer
                 let drawnCard = state.gameState |> GameState.getDrawnCard
                 match (activePlayer,drawnCard) with
-                | Some(activePlayer), Some(card) -> [
+                | activePlayer, Some(card) -> [
                        (activePlayerView activePlayer) 
                        (drawnCardView card) 
                        (actionListView state dispatch) 
                     ]
-                | Some(activePlayer), None -> [
+                | activePlayer, None -> [
                        (activePlayerView activePlayer) 
                        (actionListView state dispatch) 
                     ]
-                | None, Some(_) -> failwith "Invalid state"
-                | None,None -> [actionListView state dispatch]
         StackPanel.create [
             StackPanel.dock Dock.Top
             StackPanel.orientation Orientation.Vertical

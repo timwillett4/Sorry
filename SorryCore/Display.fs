@@ -135,10 +135,7 @@ let printBoardState (game:GameState) =
     let activePlayer = game |> GameState.getActivePlayer
     let drawnCard = game |> GameState.getDrawnCard 
     
-    let activePlayer =
-        match activePlayer with
-        | Some(activePlayer) -> activePlayer |> printActivePlayer
-        | None -> ""
+    let activePlayer = activePlayer |> printActivePlayer
         
     let tokenPositions = tokenPositions |> printTokenPosition
     

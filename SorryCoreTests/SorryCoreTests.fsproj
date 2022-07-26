@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="AddPlayerTests.fs" />
     <Compile Include="DrawCardTests.fs" />
     <Compile Include="ChooseActionTests.fs" />
     <Compile Include="SetupTests.fs" />

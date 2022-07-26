@@ -14,7 +14,7 @@ let main argv =
         
     let readLine() = Console.ReadLine()
     
-    let game = GameState.newGame
+    let game = GameBuilder.newGame
     
     let rec getNumberOfPlayers readChar =
         match readChar() with
@@ -46,7 +46,7 @@ let main argv =
         let color = chooseColor readChar
         printfn ""
     
-        match game |> GameState.tryAddPlayer playerName color with
+        match game |> GameBuilder.tryAddPlayer playerName color with
         | Ok(game) -> game
         | Error(gameSate, error:string) ->
             printfn "%A" <|error
@@ -65,7 +65,7 @@ let main argv =
     
     let random = fun () -> Random(DateTime.Now.Millisecond).Next()
     
-    let game = game |> GameState.tryStartGame random
+    let game = game |> GameBuilder.tryStartGame random
     
     let rec gameLoop game = 
         result {
@@ -81,10 +81,8 @@ let main argv =
             return! gameLoop game
     }
     
-    let game = result {
-        let! game = game
-        
-        return! gameLoop game
-    }
+    match game with
+    | Ok(game) -> game |> gameLoop |> ignore
+    | Error(_, error) -> printf "%s" <| error
     
     0 // return an integer exit code 

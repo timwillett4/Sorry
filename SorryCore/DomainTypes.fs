@@ -201,7 +201,6 @@ type GameOverState = {
 
 /// GameState is a discriminate union storing the current state of the game
 type GameState = 
-   | SettingUp of SetupState 
    | DrawingCard of BoardState
    | ChoosingAction of ChooseActionState
    | GameOver of GameOverState
