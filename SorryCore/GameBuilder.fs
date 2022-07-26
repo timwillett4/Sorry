@@ -62,8 +62,6 @@ let tryStartGame random builder =
     
     match builder |> startGameValidator with
     | true, _ ->
-        let activePlayer = random() % builder.Players.Length
-            
         let initializeTokenPositions (players:Player list) =
             
             let getStartingTokenPositions player = 
@@ -75,6 +73,7 @@ let tryStartGame random builder =
             |> Map.ofList
             
         let tokenPositions = initializeTokenPositions builder.Players
+        let activePlayer = random() % builder.Players.Length
         
         Ok(DrawingCard({Deck=newDeck;Players=builder.Players;TokenPositions=tokenPositions;ActivePlayer=builder.Players.[activePlayer]}))
         
