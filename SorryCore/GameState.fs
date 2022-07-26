@@ -7,15 +7,17 @@ open Sorry.Core
 /// The Sorry Game State consists
 /// @TODO - finish
 
-
-// Queries
-let wrap max n = (n + max) % max
-let nColors = 4
-let incrementColor increment color =
+////////////////////////////////////////
+// Helper Methods
+////////////////////////////////////////
+let private wrap max n = (n + max) % max
+let private nColors = 4
+let private incrementColor increment color =
     let wrap max n = (n + max) % max
     (color |> int) + increment |> wrap nColors |> enum
     
-let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
+let private positionAheadOfCurrentBy moveIncrement localColor currentPosition =
+    
     let nSpacePerColor = 15
     
     let toLocal boardPosition =
@@ -58,25 +60,41 @@ let positionAheadOfCurrentBy moveIncrement localColor currentPosition =
         Some(Outer(localColor, OuterCoordinate.One))
     | position -> ((position |> toLocal) + moveIncrement) |> toBoardPosition
         
-// @TODO convert to Option instead of result
-let getTokenPositions game = 
+////////////////////////////////////////
+// Queries
+////////////////////////////////////////
+
+/// <summary>
+/// Returns a <see cref="GameState"/> struct representing the positions
+/// of each token.
+/// </summary>
+let getTokenPositions game =
     match game with
     | DrawingCard(gameState) -> gameState.TokenPositions
     | ChoosingAction(gameState) -> gameState.BoardState.TokenPositions
     | GameOver _ -> failwith "Not Implemented"
     
+/// <summary>
+/// Returns a list of all players.
+/// </summary>
 let getPlayers game = 
     match game with
     | DrawingCard(gameState) -> gameState.Players
     | ChoosingAction(gameState) -> gameState.BoardState.Players
     | GameOver _ -> failwith "Not Implemented"
     
+/// <summary>
+/// Returns the player who's turn it is.
+/// </summary>
 let getActivePlayer game = 
     match game with
     | DrawingCard(gameState) -> gameState.ActivePlayer
     | ChoosingAction(gameState) -> gameState.BoardState.ActivePlayer
     | GameOver(gameState) -> gameState.Winner
     
+/// <summary>
+/// Returns a list of all the valid <see cref="Action"/> that can be chosen.
+/// </summary>
 let getAvailableActions game =
     match game with
     | GameOver _ -> []
@@ -157,12 +175,13 @@ let getAvailableActions game =
                                        |> Map.toList
                                        |> List.map fst
             
-            // Since known max pawns is 3 simpler to hard code all possibilities then come up with generic implementation
             let pieceSplits =
-                match pawnsEligibleToMove with
-                | [pawn1; pawn2; pawn3] -> [(pawn1, pawn2);(pawn1, pawn3);(pawn2, pawn3)]
-                | [pawn1; pawn2] -> [(pawn1, pawn2)]
-                | _ -> []
+                let rec calcPieceSplits (pawns:Pawn list) = 
+                    match pawns with
+                    | head :: tail -> (List.allPairs [head] tail) @ (calcPieceSplits tail)
+                    | [] -> []
+                
+                pawnsEligibleToMove |> calcPieceSplits
                 
             (pieceSplits, splits)
             ||> List.allPairs
@@ -208,6 +227,9 @@ let getNumCardsLeft game =
     | DrawingCard boardState -> boardState.Deck.Length
     | GameOver boardState -> 0 // @TODO
     
+////////////////////////////////////////
+// Commands
+////////////////////////////////////////
 let tryDrawCard random game =
     match game with
     | DrawingCard(gameState) ->
