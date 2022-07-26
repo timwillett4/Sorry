@@ -64,15 +64,14 @@ let tryStartGame random builder =
     | true, _ ->
         let activePlayer = random() % builder.Players.Length
             
-        // @TODO - see if List.allPairs can be used to simplify this
         let initializeTokenPositions (players:Player list) =
+            
+            let getStartingTokenPositions player = 
+                FSharpType.getAllUnionCases<PawnID>()
+                |> List.map (fun pawnID -> {Color=player.Color;ID=pawnID}, BoardPosition.Start)
+                
             players
-            |> List.map (fun player ->
-                [{Color=player.Color;ID=PawnID.One}, BoardPosition.Start
-                 {Color=player.Color;ID=PawnID.Two}, BoardPosition.Start
-                 {Color=player.Color;ID=PawnID.Three}, BoardPosition.Start
-                 {Color=player.Color;ID=PawnID.Four}, BoardPosition.Start])
-            |> List.reduce (fun colors1 colors2 -> colors1 @ colors2)
+            |> List.collect getStartingTokenPositions
             |> Map.ofList
             
         let tokenPositions = initializeTokenPositions builder.Players
